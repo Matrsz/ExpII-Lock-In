@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 from builtins import *
 from cmath import pi, tau
 from pickle import TRUE
+from telnetlib import TSPEED
 from time import sleep  # @UnusedWildImport
 from mcculw import ul
 from mcculw.device_info import DaqDeviceInfo
@@ -10,11 +11,7 @@ from scipy import signal
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-
-try:
-    from console_examples_util import config_first_detected_device
-except ImportError:
-    from .console_examples_util import config_first_detected_device
+from console_examples_util import config_first_detected_device
 
 # Inicializa la placa de adquisición
 def inicializar():
@@ -55,7 +52,7 @@ def escritura(board_num, ao_range, channels, values):
 def mezclar(r, v):
     aux = signal.hilbert(r)
     p = np.multiply(v, np.real(aux))
-    q = np.multiply(v, np.real(aux))
+    q = np.multiply(v, np.imag(aux))
     return [p, q]
 
 # Si Nx >= Nh toma los últimos Nh elementos de x, si Nx < Nh completa x con 0s
@@ -92,8 +89,10 @@ if __name__ == '__main__':  #void main
     board_num, ai_range, ao_range = inicializar()
     in_channels = [0, 1]
     out_channels = [2, 3]
+    Ts = []
 
     fs = medir_fs(board_num, ai_range, ao_range, in_channels, out_channels)
+    Ts.append(1/fs)
     fc = 50
     N = 100
     h, tau = filtro(fs, fc, N)
@@ -103,8 +102,9 @@ if __name__ == '__main__':  #void main
     t, v, r, R, P = [], [], [], [], []
     max_muestras = 1000
     start = time.time()
+    t.append(0)
 
-    while True:
+    while t[-1]<10:
         inicio = time.time()-start
 
         # Etapa de adquisición
@@ -130,9 +130,12 @@ if __name__ == '__main__':  #void main
             tau_flag = False
 
         t.append(t_now)
+        Ts.append(t[-1]-t[-2])
 
         t, v, r, R, P = limpiar_vectores([t, v, r, R, P], max_muestras)
 
+    plt.plot(Ts)
+    plt.show()
 
 
 
