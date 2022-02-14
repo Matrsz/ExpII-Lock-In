@@ -90,8 +90,8 @@ if __name__ == '__main__':  #void main
 
     fs = medir_fs(board_num, ai_range, ao_range, in_channels, out_channels)
     Ts.append(1/fs)
-    fc = 10
-    N = 100
+    fc = 1
+    N = 1000
     h, tau = filtro(fs, fc, N)
     print("Tau =", tau)
     tau_flag = True
@@ -105,7 +105,7 @@ if __name__ == '__main__':  #void main
     start = time.time()
     t.append(0)
 
-    while t[-1]<7:
+    while t[-1]<30:
         inicio = time.time()-start
 
         # Etapa de adquisición
@@ -122,7 +122,7 @@ if __name__ == '__main__':  #void main
 
         P.append(P_out)
         R.append(R_out)
-
+        print(R_out)
         # Etapa de escritura
         escritura(board_num, ao_range, out_channels, [R_out, P_out])
         

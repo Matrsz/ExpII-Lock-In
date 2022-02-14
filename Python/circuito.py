@@ -2,9 +2,9 @@ from cmath import phase
 import numpy as np 
 import matplotlib.pyplot as plt
 
-Rs = 10e3
-R = 1e3
-C = 100e-9
+Rs = 1000e3
+R = 100e3
+C = 33e-9
 
 f = np.linspace(0, 200, 1000)
 w = 2*np.pi*f
