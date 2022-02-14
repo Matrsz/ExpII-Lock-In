@@ -25,17 +25,13 @@ def inicializar():
               daq_dev_info.unique_id, ')\n', sep='')
 
         ai_info = daq_dev_info.get_ai_info()
-        ai_range = ai_info.supported_ranges[0]
+        ai_range = ai_info.supported_ranges[0] # el 2 esta en 5V
         ao_info = daq_dev_info.get_ao_info()
         ao_range = ao_info.supported_ranges[0]
-
         return [board_num, ai_range, ao_range]
 
     except Exception as e:  #En caso de error
         print('\nError\n', e)
-
-    finally:
-        ul.release_daq_device(board_num)
 
 # Lee de la placa de adquisición todos los valores en los canales channels y los retorna
 def adquisicion(board_num, ai_range, channels):
@@ -54,6 +50,7 @@ def mezclar(r, v):
     p = np.multiply(v, np.real(aux))
     q = np.multiply(v, np.imag(aux))
     return [p, q]
+    
 
 # Si Nx >= Nh toma los últimos Nh elementos de x, si Nx < Nh completa x con 0s
 # Aplica el fir definido por h, retornando y[n] = el producto interno de h con x 
@@ -88,27 +85,33 @@ def limpiar_vectores(xs, N):
 if __name__ == '__main__':  #void main
     board_num, ai_range, ao_range = inicializar()
     in_channels = [0, 1]
-    out_channels = [2, 3]
+    out_channels = [0, 1] # 13 y 14
     Ts = []
 
     fs = medir_fs(board_num, ai_range, ao_range, in_channels, out_channels)
     Ts.append(1/fs)
-    fc = 50
+    fc = 10
     N = 100
     h, tau = filtro(fs, fc, N)
     print("Tau =", tau)
     tau_flag = True
+
+    #w, H = signal.freqz(h)
+    #plt.plot(w/np.pi*fs/2, np.abs(H))
+    #plt.show()
 
     t, v, r, R, P = [], [], [], [], []
     max_muestras = 1000
     start = time.time()
     t.append(0)
 
-    while t[-1]<10:
+    while t[-1]<7:
         inicio = time.time()-start
 
         # Etapa de adquisición
-        r_in, v_in = adquisicion(board_num, ai_range, in_channels)
+        v_in, r_in = adquisicion(board_num, ai_range, in_channels)
+        fin = time.time()-start
+
         r.append(r_in)
         v.append(v_in)
 
@@ -123,7 +126,7 @@ if __name__ == '__main__':  #void main
         # Etapa de escritura
         escritura(board_num, ao_range, out_channels, [R_out, P_out])
         
-        fin = time.time()-start
+
         t_now = (inicio+fin)/2
         if t_now >= tau and tau_flag:
             print("Tau superado, Mediciones válidas.")
@@ -134,8 +137,12 @@ if __name__ == '__main__':  #void main
 
         t, v, r, R, P = limpiar_vectores([t, v, r, R, P], max_muestras)
 
-    plt.plot(Ts)
+    plt.plot(R)
+    plt.plot(P)
     plt.show()
+    #plt.plot(R)
+    #plt.plot(P)
+    #plt.show()
 
 
 
