@@ -89,9 +89,10 @@ if __name__ == '__main__':  #void main
     Ts = []
 
     fs = medir_fs(board_num, ai_range, ao_range, in_channels, out_channels)
+    print(fs)
     Ts.append(1/fs)
-    fc = 1
-    N = 1000
+    fc = 0.1    
+    N = 5000    #debe ser menor a max_muestras
     h, tau = filtro(fs, fc, N)
     print("Tau =", tau)
     tau_flag = True
@@ -101,17 +102,17 @@ if __name__ == '__main__':  #void main
     #plt.show()
 
     t, v, r, R, P = [], [], [], [], []
-    max_muestras = 1000
+    max_muestras = 5000
     start = time.time()
     t.append(0)
 
-    while t[-1]<30:
+    while t[-1]<60:
         inicio = time.time()-start
 
         # Etapa de adquisición
-        v_in, r_in = adquisicion(board_num, ai_range, in_channels)
+        r_in, v_in = adquisicion(board_num, ai_range, in_channels)
         fin = time.time()-start
-
+        r_in = 2*r_in
         r.append(r_in)
         v.append(v_in)
 
@@ -119,10 +120,10 @@ if __name__ == '__main__':  #void main
         p, q = mezclar(r, v)
         x, y = filtrar(p, h), filtrar(q, h)
         R_out, P_out = np.hypot(y, x), np.arctan2(y, x)
+        P_out = P_out/np.pi
 
         P.append(P_out)
         R.append(R_out)
-        print(R_out)
         # Etapa de escritura
         escritura(board_num, ao_range, out_channels, [R_out, P_out])
         
@@ -136,13 +137,24 @@ if __name__ == '__main__':  #void main
         Ts.append(t[-1]-t[-2])
 
         t, v, r, R, P = limpiar_vectores([t, v, r, R, P], max_muestras)
+    if len(t)>len(R):
+        t.pop(0)
+    H = np.mean(R)*np.cos(np.mean(P)) + 1j*np.mean(R)*np.sin(np.mean(P))
+    Z = H / (1-H) * 1.0206e6
+    print("Resistencia:",np.real(Z),"\nCapacitancia:",1/(2*pi*25*np.imag(Z)))
+    print("H:",H)
 
-    plt.plot(R)
-    plt.plot(P)
+
+    fig, axs = plt.subplots(2,1)
+    axs[0].plot(t,R, "b")
+    axs[0].set_title("Amplitud")
+    axs[0].set_ylim([0, np.max(R)])
+    axs[1].plot(t, P, "r")
+    axs[1].set_ylim([-1, 1])
+    axs[1].set_title("Fase")
     plt.show()
-    #plt.plot(R)
-    #plt.plot(P)
-    #plt.show()
 
 
+    ul.release_daq_device(board_num)
+        
 
