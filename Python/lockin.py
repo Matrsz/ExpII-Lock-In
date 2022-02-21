@@ -68,15 +68,17 @@ def filtro(fs, fc, N):
 # Se considera despreciable el tiempo de CPU respecto al tiempo de I/O
 def medir_Ts(board_num, ai_range, ao_range, in_channels, out_channels, test_time):
     Ts = []
+    Vn = []
     test_start = time.time()
     while time.time()-test_start < test_time:
         start = time.time()
-        for c in in_channels:
-            ul.v_in(board_num, c, ai_range)
+        Vn.append(ul.v_in(board_num, 0, ai_range))
+        ul.v_in(board_num, 1, ai_range)
         for c in out_channels:
             ul.v_out(board_num, c, ao_range, 0)
         Ts.append(time.time()-start)
-    return [np.mean(Ts), np.std(Ts)]
+    Vp = np.sqrt(np.mean(np.power(Vn,2))) * np.sqrt(2)
+    return [np.mean(Ts), np.std(Ts), Vp]
 
 # Retorna como máximo los últimos N elementos de los vectores de entrada
 def limpiar_vectores(xs, N):
@@ -91,14 +93,14 @@ if __name__ == '__main__':  #void main
     in_channels = [0, 1]
     out_channels = [0, 1] if realtime else [] # 13 y 14
 
-    Ts, Ts_err = medir_Ts(board_num, ai_range, ao_range, in_channels, out_channels, 10)
-
+    Ts, Ts_err, Vp = medir_Ts(board_num, ai_range, ao_range, in_channels, out_channels, 5)
+    print("VP:",Vp)
     print("Ts = ", Ts, " +/- ", Ts_err, "s")
 
     #Inicialización del filtro pasa bajos para la frecuencia de muestreo medida
     fs = 1/Ts 
     fc = 0.1    
-    N = 5000 #debe ser <= a max_muestras
+    N = 2000 #debe ser <= a max_muestras
     h, tau = filtro(fs, fc, N)
     print("Tau = ", tau, " s")
 
@@ -111,7 +113,7 @@ if __name__ == '__main__':  #void main
     file = open(filename, 'w', newline='')
     writer = csv.writer(file, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-    while t_now < 20*tau:
+    while t_now < 10*tau:
         inicio = time.time()-start
 
         # Etapa de adquisición
@@ -122,7 +124,7 @@ if __name__ == '__main__':  #void main
 
         # Etapa de procesamiento
         p, q = mezclar(r, v)
-        x, y = filtrar(p, h), filtrar(q, h)
+        x, y = filtrar(p, h)/(Vp*Vp), filtrar(q, h)/(Vp*Vp)
         R_out, P_out = np.hypot(y, x), np.arctan2(y, x)/np.pi
 
         # Etapa de escritura (a placa de adquisición)
@@ -136,7 +138,7 @@ if __name__ == '__main__':  #void main
             if tau_flag:
                 print("5 tau superado, Mediciones válidas.")
                 tau_flag = False
-            writer.writerow([t_now, P_out, R_out])
+            writer.writerow([t_now, R_out, P_out])
         
         v, r = limpiar_vectores([v, r], max_muestras)
     
