@@ -99,7 +99,7 @@ if __name__ == '__main__':  #void main
 
     #Inicialización del filtro pasa bajos para la frecuencia de muestreo medida
     fs = 1/Ts 
-    fc = 0.1    
+    fc = 0.001    
     N = 2000 #debe ser <= a max_muestras
     h, tau = filtro(fs, fc, N)
     print("Tau = ", tau, " s")
@@ -143,6 +143,10 @@ if __name__ == '__main__':  #void main
         v, r = limpiar_vectores([v, r], max_muestras)
     
     file.close()
+
+    plt.plot(r)
+    plt.plot(v)
+    plt.show()
 
 ##    if len(t)>len(R):
 ##        t.pop(0)
