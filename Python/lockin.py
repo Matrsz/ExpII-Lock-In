@@ -1,16 +1,14 @@
-#Reads an A/D Input Channel
 from __future__ import absolute_import, division, print_function
 from builtins import *
-from cmath import pi, tau
 from pickle import TRUE
 from telnetlib import TSPEED
-from time import sleep  # @UnusedWildImport
 from mcculw import ul
 from mcculw.device_info import DaqDeviceInfo
 from scipy import signal
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import csv
 from console_examples_util import config_first_detected_device
 
 # Inicializa la placa de adquisición
@@ -50,7 +48,6 @@ def mezclar(r, v):
     p = np.multiply(v, np.real(aux))
     q = np.multiply(v, np.imag(aux))
     return [p, q]
-    
 
 # Si Nx >= Nh toma los últimos Nh elementos de x, si Nx < Nh completa x con 0s
 # Aplica el fir definido por h, retornando y[n] = el producto interno de h con x 
@@ -69,49 +66,56 @@ def filtro(fs, fc, N):
 # Mide la frecuencia de de muestreo efectiva del sistema de medición
 # Considerando el tiempo de lectura y escritura a los canales del instrumento
 # Se considera despreciable el tiempo de CPU respecto al tiempo de I/O
-def medir_fs(board_num, ai_range, ao_range, in_channels, out_channels):
-    start = time.time()
-    for c in in_channels:
-        ul.v_in(board_num, c, ai_range)
-    for c in out_channels:
-        ul.v_out(board_num, c, ao_range, 0)
-    Ts = time.time()-start
-    return 1/Ts
+def medir_Ts(board_num, ai_range, ao_range, in_channels, out_channels, test_time):
+    Ts = []
+    test_start = time.time()
+    while time.time()-test_start < test_time:
+        start = time.time()
+        for c in in_channels:
+            ul.v_in(board_num, c, ai_range)
+        for c in out_channels:
+            ul.v_out(board_num, c, ao_range, 0)
+        Ts.append(time.time()-start)
+    return [np.mean(Ts), np.std(Ts)]
 
 # Retorna como máximo los últimos N elementos de los vectores de entrada
 def limpiar_vectores(xs, N):
     return [x[-N:] if len(x) >= N else x for x in xs]
 
 if __name__ == '__main__':  #void main
+    realtime = True
+    filename = 'sim_out.csv'
+
+    #Inicialización de la placa de adquisición, medición del tiempo de muestreo
     board_num, ai_range, ao_range = inicializar()
     in_channels = [0, 1]
-    out_channels = [0, 1] # 13 y 14
-    Ts = []
+    out_channels = [0, 1] if realtime else [] # 13 y 14
 
-    fs = medir_fs(board_num, ai_range, ao_range, in_channels, out_channels)
-    print(fs)
-    Ts.append(1/fs)
+    Ts, Ts_err = medir_Ts(board_num, ai_range, ao_range, in_channels, out_channels, 10)
+
+    print("Ts = ", Ts, " +/- ", Ts_err, "s")
+
+    #Inicialización del filtro pasa bajos para la frecuencia de muestreo medida
+    fs = 1/Ts 
     fc = 0.1    
-    N = 5000    #debe ser menor a max_muestras
+    N = 5000 #debe ser <= a max_muestras
     h, tau = filtro(fs, fc, N)
-    print("Tau =", tau)
+    print("Tau = ", tau, " s")
+
     tau_flag = True
-
-    #w, H = signal.freqz(h)
-    #plt.plot(w/np.pi*fs/2, np.abs(H))
-    #plt.show()
-
-    t, v, r, R, P = [], [], [], [], []
-    max_muestras = 5000
+    max_muestras = 5000 #debe ser >= al orden del filtro N
+    v, r = [], []
+    t_now = 0
     start = time.time()
-    t.append(0)
 
-    while t[-1]<60:
+    file = open(filename, 'w', newline='')
+    writer = csv.writer(file, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+    while t_now < 20*tau:
         inicio = time.time()-start
 
         # Etapa de adquisición
         r_in, v_in = adquisicion(board_num, ai_range, in_channels)
-        fin = time.time()-start
         r_in = 2*r_in
         r.append(r_in)
         v.append(v_in)
@@ -119,40 +123,41 @@ if __name__ == '__main__':  #void main
         # Etapa de procesamiento
         p, q = mezclar(r, v)
         x, y = filtrar(p, h), filtrar(q, h)
-        R_out, P_out = np.hypot(y, x), np.arctan2(y, x)
-        P_out = P_out/np.pi
+        R_out, P_out = np.hypot(y, x), np.arctan2(y, x)/np.pi
 
-        P.append(P_out)
-        R.append(R_out)
-        # Etapa de escritura
-        escritura(board_num, ao_range, out_channels, [R_out, P_out])
+        # Etapa de escritura (a placa de adquisición)
+        if realtime:
+            escritura(board_num, ao_range, out_channels, [R_out, P_out])
         
-
+        fin = time.time()-start        
         t_now = (inicio+fin)/2
-        if t_now >= tau and tau_flag:
-            print("Tau superado, Mediciones válidas.")
-            tau_flag = False
+        
+        if t_now > 5*tau:
+            if tau_flag:
+                print("5 tau superado, Mediciones válidas.")
+                tau_flag = False
+            writer.writerow([t_now, P_out, R_out])
+        
+        v, r = limpiar_vectores([v, r], max_muestras)
+    
+    file.close()
 
-        t.append(t_now)
-        Ts.append(t[-1]-t[-2])
-
-        t, v, r, R, P = limpiar_vectores([t, v, r, R, P], max_muestras)
-    if len(t)>len(R):
-        t.pop(0)
-    H = np.mean(R)*np.cos(np.mean(P)) + 1j*np.mean(R)*np.sin(np.mean(P))
-    Z = H / (1-H) * 1.0206e6
-    print("Resistencia:",np.real(Z),"\nCapacitancia:",1/(2*pi*25*np.imag(Z)))
-    print("H:",H)
-
-
-    fig, axs = plt.subplots(2,1)
-    axs[0].plot(t,R, "b")
-    axs[0].set_title("Amplitud")
-    axs[0].set_ylim([0, np.max(R)])
-    axs[1].plot(t, P, "r")
-    axs[1].set_ylim([-1, 1])
-    axs[1].set_title("Fase")
-    plt.show()
+##    if len(t)>len(R):
+##        t.pop(0)
+##    H = np.mean(R)*np.cos(np.mean(P)) + 1j*np.mean(R)*np.sin(np.mean(P))
+##    Z = H / (1-H) * 1.0206e6
+##    print("Resistencia:",np.real(Z),"\nCapacitancia:",1/(2*pi*25*np.imag(Z)))
+##    print("H:",H)
+##
+##
+##    fig, axs = plt.subplots(2,1)
+##    axs[0].plot(t,R, "b")
+##    axs[0].set_title("Amplitud")
+##    axs[0].set_ylim([0, np.max(R)])
+##    axs[1].plot(t, P, "r")
+##    axs[1].set_ylim([-1, 1])
+##    axs[1].set_title("Fase")
+##    plt.show()
 
 
     ul.release_daq_device(board_num)
