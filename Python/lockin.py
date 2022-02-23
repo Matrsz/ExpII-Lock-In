@@ -138,7 +138,7 @@ if __name__ == '__main__':  #void main
             if tau_flag:
                 print("5 tau superado, Mediciones válidas.")
                 tau_flag = False
-            writer.writerow([t_now, R_out, P_out])
+            writer.writerow([t_now, v_in, R_out, P_out])
         
         v, r = limpiar_vectores([v, r], max_muestras)
     

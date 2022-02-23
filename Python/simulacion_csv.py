@@ -7,7 +7,7 @@ import csv
 def mezclar(r, v):
     aux = signal.hilbert(r)
     p = np.multiply(v, np.real(aux))
-    q = np.multiply(v, np.real(aux))
+    q = np.multiply(v, np.imag(aux))
     return [p, q]
 
 # Si Nx >= Nh toma los últimos Nh elementos de x, si Nx < Nh completa x con 0s
@@ -28,59 +28,71 @@ def filtro(fs, fc, N):
 def limpiar_vectores(xs, N):
     return [x[-N:] if len(x) >= N else x for x in xs]
 
-
 # Inicializa el sistema de medición, midiendo la frecuencia de de muestreo efectiva
 # Considerando el tiempo de lectura y escritura a los canales del instrumento
-def medir_fs(t):
-    Ts = t[1]-t[0]
-    return 1/Ts
+def medir_Ts(t, r, test_time):
+    Ts = []
+    Vn = []
+    i = 1
+    while t[i] < test_time:
+        Vn.append(r[i])
+        Ts.append(t[i]-t[i-1])
+        i += 1
+    Vp = np.sqrt(np.mean(np.power(Vn,2))) * np.sqrt(2)
+    return [np.mean(Ts), np.std(Ts), Vp]
+
+def limpiar_vectores(xs, N):
+    return [x[-N:] if len(x) >= N else x for x in xs]
 
 if __name__ == '__main__':  #void main
     filename = 'sim_out.csv'
     fs = 500
     Ts = 1/fs
-    N = 1000
+    N = 40000
     ts = np.arange(0, N*Ts, Ts)
-    fp = 50
-    fm = 10
+    
+    fp = 5
     rs = np.sin(2*np.pi*fp*ts)
-    m = np.sin(2*np.pi*fm*ts)+1
-    vs = np.multiply(rs, m+1)
-    ns = np.random.normal(0, 1, N)
+    ns = np.random.normal(0, 1, N)*2
+    vs = np.sin(2*np.pi*fp*ts)/2 + ns
+
 
     file = open('sim_out.csv', 'w', newline='')
     writer = csv.writer(file, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-    fc = 15
-    orden = 200
+    fc = 0.001
+    orden = 4000
+    Tss, Ts_err, Vp = medir_Ts(ts, rs, 10)
+    print(Tss, Vp)
+    h, tau = filtro(1/Tss, fc, orden)
 
-    fss = medir_fs(ts)
-    h, tau = filtro(fss, fc, orden)
+    print("Tau = ", tau)
     
     v, r = [], []
+    i = 0
+    t_now = 0
     
-    for i in range(2, N):    
+    max_muestras = 5000 #debe ser >= al orden del filtro N
+    
+    while True:
         # Etapa de adquisición
-        r.append(rs[i])
-        v.append(vs[i]+ns[i])
+        r_in = 2*rs[i]
+        r.append(r_in)
+        v_in = vs[i]+ns[i]
+        v.append(v_in)
     
         # Etapa de procesamiento
         p, q = mezclar(r, v)
-        x = filtrar(p, h)
-        y = filtrar(q, h)
+        x = filtrar(p, h)/(Vp*Vp)
+        y = filtrar(q, h)/(Vp*Vp)
     
         R_out, P_out = np.hypot(y, x), np.arctan2(y, x)
-        t = ts[i]
 
-        writer.writerow([t, P_out, R_out])
-
-    ## Q = np.abs(np.fft.fft(qs))
-    ## F = np.fft.fftfreq(len(ts), Tss)
-    ## Q = np.split(Q, 2)[0]
-    ## Q = np.abs(Q)
-    ## Q = Q/np.max(Q)
-    ## F = np.split(F, 2)[0]
-    ## plt.plot(F, Q)
-    ## w, H = signal.freqz(h)
-    ## plt.plot(w/np.pi*fss/2, np.abs(H))
-    ## plt.show()
+        t_now = ts[i]
+        if t_now > 5*tau:
+            writer.writerow([t_now, v_in, R_out, P_out])
+        if t_now >= 10*tau:
+            break
+        
+        i += 1        
+        v, r = limpiar_vectores([v, r], max_muestras)
