@@ -48,7 +48,8 @@ plt.show()
 
 
 #H = R_m*np.cos(P_m) + 1j*R_m*np.sin(P_m)
-#H = np.mean(R)*np.cos(np.mean(P)*np.pi) + 1j*np.mean(R)*np.sin(np.mean(P)*np.pi)
-#Z = H / (1-H) * 470
-#print("Resistencia:",np.real(Z),"\nCapacitancia:",np.imag(Z)/(2*np.pi*150))
-#print("H:",H)
+H = np.mean(R)*np.cos(np.mean(P)*np.pi) + 1j*np.mean(R)*np.sin(np.mean(P)*np.pi)
+Z = (H*10000)/(1-H)
+print("Z = ", Z)
+print("Resistencia:",np.real(Z),"\nCapacitancia:",-1/(2*np.pi*23.405138*np.imag(Z)))
+print("H:",H)

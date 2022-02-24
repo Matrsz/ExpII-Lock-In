@@ -72,8 +72,8 @@ def medir_Ts(board_num, ai_range, ao_range, in_channels, out_channels, test_time
     test_start = time.time()
     while time.time()-test_start < test_time:
         start = time.time()
-        Vn.append(ul.v_in(board_num, 0, ai_range))
-        ul.v_in(board_num, 1, ai_range)
+        Vn.append(ul.v_in(board_num, 2, ai_range))
+        ul.v_in(board_num, 3, ai_range)
         for c in out_channels:
             ul.v_out(board_num, c, ao_range, 0)
         Ts.append(time.time()-start)
@@ -85,12 +85,12 @@ def limpiar_vectores(xs, N):
     return [x[-N:] if len(x) >= N else x for x in xs]
 
 if __name__ == '__main__':  #void main
-    realtime = True
+    realtime = False
     filename = 'sim_out.csv'
 
     #Inicialización de la placa de adquisición, medición del tiempo de muestreo
     board_num, ai_range, ao_range = inicializar()
-    in_channels = [0, 1]
+    in_channels = [2, 3]
     out_channels = [0, 1] if realtime else [] # 13 y 14
 
     Ts, Ts_err, Vp = medir_Ts(board_num, ai_range, ao_range, in_channels, out_channels, 5)
@@ -99,8 +99,8 @@ if __name__ == '__main__':  #void main
 
     #Inicialización del filtro pasa bajos para la frecuencia de muestreo medida
     fs = 1/Ts 
-    fc = 0.001    
-    N = 2000 #debe ser <= a max_muestras
+    fc = 0.01    
+    N = 4000 #debe ser <= a max_muestras
     h, tau = filtro(fs, fc, N)
     print("Tau = ", tau, " s")
 
@@ -113,7 +113,7 @@ if __name__ == '__main__':  #void main
     file = open(filename, 'w', newline='')
     writer = csv.writer(file, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-    while t_now < 10*tau:
+    while t_now < 15*tau:
         inicio = time.time()-start
 
         # Etapa de adquisición
@@ -134,19 +134,20 @@ if __name__ == '__main__':  #void main
         fin = time.time()-start        
         t_now = (inicio+fin)/2
         
-        if t_now > 5*tau:
+        if t_now > 8*tau:
             if tau_flag:
                 print("5 tau superado, Mediciones válidas.")
                 tau_flag = False
-            writer.writerow([t_now, v_in, R_out, P_out])
+            writer.writerow([t_now, v_in/Vp, R_out, P_out, r_in, x, y, p[-1], q[-1], Vp, fs, tau, N, fc])
         
         v, r = limpiar_vectores([v, r], max_muestras)
-    
+
+
     file.close()
 
-    plt.plot(r)
-    plt.plot(v)
-    plt.show()
+#    plt.plot(r)
+#    plt.plot(v)
+#    plt.show()
 
 ##    if len(t)>len(R):
 ##        t.pop(0)
