@@ -10,6 +10,35 @@ def fourierizar2(s):
     return S
 
 
+def pasabanda(fn, f1, f2, N):
+    w1, w2 = f1/fn, f2/fn
+    h_bp = signal.firwin(N, [w1, w2], pass_zero=False)
+    h_bs = signal.firwin(N, [w1, w2])
+
+    return [h_bp, h_bs]
+
+def pasabajo(fn, fc, N):
+    wc = fc/fn
+    h_hp = signal.firwin(N, wc, pass_zero=False)
+    h_lp = signal.firwin(N, wc)
+
+    return [h_lp, h_hp]
+
+def plot_filter(t, v, fn, h1, h2):
+    Ts = (t[-1]-t[0])/len(t)
+    f = np.fft.fftfreq(len(t), Ts)
+
+    w, H1 = signal.freqz(h1)
+    w, H2 = signal.freqz(h2)
+
+    fig, axs = plt.subplots(2,1)
+    axs[0].plot(w/np.pi*fn, np.abs(H1), f, fourierizar2(v))
+    axs[0].set_title("Pasa Banda")
+    axs[1].plot(w/np.pi*fn, np.abs(H2), f, fourierizar2(v))
+    axs[1].set_title("Rechaza Banda")
+    plt.show()
+
+
 def get_snrs(filename):
     data = np.genfromtxt(filename, delimiter=' ')
 
@@ -20,25 +49,13 @@ def get_snrs(filename):
 
     fs = 1/Ts
     fn = fs/2
+
     f0 = 30
     delta = 1
     N = 1001
-    f1, f2 = f0-delta, f0+delta
-    w1, w2 = f1/fn, f2/fn
-    h_bp = signal.firwin(N, [w1, w2], pass_zero=False)
-    h_bs = signal.firwin(N, [w1, w2])
 
-    w, H_bp = signal.freqz(h_bp)
-    w, H_bs = signal.freqz(h_bs)
-
-    fig, axs = plt.subplots(2,1)
-    axs[0].plot(w/np.pi*fn, np.abs(H_bp), f, fourierizar2(v))
-    axs[0].set_xlim([0, max(f)])
-    axs[0].set_title("Pasa Banda")
-    axs[1].plot(w/np.pi*fn, np.abs(H_bs), f, fourierizar2(v))
-    axs[1].set_xlim([0, max(f)])
-    axs[1].set_title("Rechaza Banda")
-    plt.show()
+    h_bp, h_bs = pasabanda(fn, f0-delta, f0+delta, N)
+    plot_filter(t, v, fn, h_bp, h_bs)
 
     s = signal.filtfilt(h_bp, [1], v)
     n = signal.filtfilt(h_bs, [1], v)
@@ -52,39 +69,12 @@ def get_snrs(filename):
     snr_db_in = 10*np.log10(snr)
     print("SNR entrada = ", snr_db_in, " dB")
 
-    #fig, axs = plt.subplots(2,1)
-    #axs[0].plot(t, s)
-    #axs[0].set_title("Señal")
-    #axs[1].plot(t, n)
-    #axs[1].set_title("Ruido")
-    #plt.show()
-
     fc = 1
-    wc = fc/fn
-    h_hp = signal.firwin(N, wc, pass_zero=False)
-    h_lp = signal.firwin(N, wc)
-
-    w, H_lp = signal.freqz(h_lp)
-    w, H_hp = signal.freqz(h_hp)
-
-    fig, axs = plt.subplots(2,1)
-    axs[0].plot(w/np.pi*fn, np.abs(H_lp), f, fourierizar2(P))
-    axs[0].set_xlim([-0.1, max(f)])
-    axs[0].set_title("Pasa Banda")
-    axs[1].plot(w/np.pi*fn, np.abs(H_hp), f, fourierizar2(P))
-    axs[1].set_xlim([-0.1, max(f)])
-    axs[1].set_title("Rechaza Banda")
-    plt.show()
+    h_lp, h_hp = pasabajo(fn, fc, N)
+    plot_filter(t, P, fn, h_lp, h_hp)
 
     s = signal.filtfilt(h_lp, [1], P)
     n = signal.filtfilt(h_hp, [1], P)
-
-    #fig, axs = plt.subplots(2,1)
-    #axs[0].plot(t, s)
-    #axs[0].set_title("Señal")
-    #axs[1].plot(t, n)
-    #axs[1].set_title("Ruido")
-    #plt.show()
 
     s_rms = np.sqrt(np.mean(s**2))
     n_rms = np.sqrt(np.mean(n**2))
@@ -92,7 +82,7 @@ def get_snrs(filename):
     print("Señal rms = ", s_rms)
     print("Ruido rms = ", n_rms)
     snr = s_rms/n_rms
-    
+
     snr_db_out = 10*np.log10(snr)
     print("SNR salida = ", snr_db_out, " dB")
 
