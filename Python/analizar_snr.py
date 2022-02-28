@@ -92,21 +92,25 @@ filenamesC = ['Csim_out_'+x+'.csv' for x in labels]
 snrins = []
 snrouts = []
 snrgain = []
+
 for filename in filenamesR:
-    snr_in, snr_out = get_snrs(filename, 30, True)
+    snr_in, snr_out = get_snrs(filename, 30, False)
     snrins.append(snr_in)
     snrouts.append(snr_out)
     snrgain.append(snr_out-snr_in)
-    print("Ganancia en SNR = ", snr_out - snr_in, " dB")
+    #print("Ganancia en SNR = ", snr_out - snr_in, " dB")
 
 for filename in filenamesC:
-    snr_in, snr_out = get_snrs(filename, 23.405138, True)
+    snr_in, snr_out = get_snrs(filename, 23.405138, False)
     snrins.append(snr_in)
     snrouts.append(snr_out)
     snrgain.append(snr_out-snr_in)
-    print("Ganancia en SNR = ", snr_out - snr_in, " dB")
+    #print("filaname: ",filename)
+   # print("Ganancia en SNR = ", snr_out - snr_in, " dB")
 
 
 plt.plot(snrins)
 plt.plot(snrouts)
 plt.show()
+
+print(snrins)
