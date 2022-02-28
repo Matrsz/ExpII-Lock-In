@@ -39,7 +39,7 @@ def medir_fs(t):
 def fourierizar(s):
     S = np.fft.fft(s)
     #S = np.split(S, 2)[0]
-    #S = np.abs(S)
+    S = np.abs(S)
     #S = S/np.max(S)
     return S
 
@@ -47,20 +47,17 @@ def fourierizar(s):
 if __name__ == '__main__':  #void main
     fs = 500
     Ts = 1/fs
-    N = 1000
+    N = 4000
     ts = np.arange(0, N*Ts, Ts)
-    fp = 10
-    fm = 5
-    rs = np.cos(2*np.pi*fp*ts)
-    #m = np.sin(2*np.pi*fm*ts)+1
-    #m = np.ones(len(rs))
-    #vs = np.sin(2*np.pi*fp*ts)
-    vs = np.cos(2*np.pi*fp*ts)
-    #vs = np.cos(2*np.pi*fp*ts - np.pi/4)
+    fp = 40
+    fm = 4
+    rs = np.sin(2*np.pi*fp*ts)
+    m = np.sin(2*np.pi*fm*ts)
+    vs = np.multiply(rs, m)
     ns = np.random.normal(0, 1, N)
     
-    fc = 15
-    orden = 200
+    fc = 5
+    orden = 500
     fss = medir_fs(ts)
     h, tau = filtro(fss, fc, orden)
     
@@ -69,41 +66,54 @@ if __name__ == '__main__':  #void main
     plt.show()
     
     t, v, r, x, y, p, q, R, P = [], [], [], [], [], [], [], [], []
-    
+    vaux = []
     for i in range(2, N):    
         # Etapa de adquisición
         r.append(rs[i])
-        v.append(2*vs[i])
-    
+        v.append(vs[i])
+        vaux.append(2*vs[i])
         # Etapa de procesamiento
-        p, q = mezclar(r, v)
+        p, q = mezclar(r, vaux)
         x_out = filtrar(p, h)
         y_out = filtrar(q, h)
-        x.append(x_out)
-        y.append(y_out)
     
         R_out, P_out = np.hypot(y_out, x_out), np.arctan2(y_out, x_out)
-        P.append(P_out)
-        R.append(R_out)
-    
-        t.append(ts[i])
+
+        if ts[i] > 5*tau: 
+            x.append(x_out)
+            y.append(y_out)
+
+            P.append(P_out)
+            R.append(R_out)
+
+            t.append(ts[i])
         
     fig, axs = plt.subplots(2,3)
     
+    p = p[-len(t):]
+    q = q[-len(t):]
+    r = r[-len(t):]
+    v = v[-len(t):]
+
     axs[0,0].plot(t, r)
-    axs[0,0].set_title("Referencia")
+    axs[0,0].set_title("r(t)")
     axs[1,0].plot(t, v)
-    axs[1,0].set_title("Señal")
-    axs[0,1].plot(t, p, t, q)
-    axs[0,1].set_title("Señal Mezclada")
-    axs[1,1].plot(t, x, t, y)
-    axs[1,1].set_title("Señal Filtrada")
-    axs[0,2].plot(t, R)
-    axs[0,2].plot([tau, tau], [min(R), max(R)])
-    axs[0,2].set_title("Amplitud lock in")
-    axs[1,2].plot(t, P)
-    axs[1,2].plot([tau, tau], [min(P), max(P)])
-    axs[1,2].set_title("Fase lock in")
+    axs[1,0].set_title("v(t)")
+    axs[0,1].plot(t, p)
+    axs[0,1].set_title("p(t)")
+    axs[1,1].plot(t, q)
+    axs[1,1].set_title("q(t)")
+    axs[0,2].plot(t, x)
+    axs[0,2].set_title("x(t)")
+    axs[1,2].plot(t, y)
+    axs[1,2].set_title("y(t)")
+
+    for axx in axs:
+        for axy in axx:
+            axy.set_xlim([7, 8])
+            axy.set_ylim([-2.2, 2.2])
+
+
 
     plt.show()
     
@@ -111,20 +121,22 @@ if __name__ == '__main__':  #void main
 
     f = np.fft.fftfreq(len(t), 1/fs)
     #f = np.split(f, 2)[0]
-
-    axs[0,0].plot(f, np.real(fourierizar(r)), f, np.imag(fourierizar(r)))
-    axs[0,0].set_title("Referencia")
-    axs[1,0].plot(f, np.real(fourierizar(v)), f, np.imag(fourierizar(v)))
-    axs[1,0].set_title("Señal")
-    axs[0,1].plot(f, np.real(fourierizar(p)), f, np.imag(fourierizar(p)))
-    axs[0,1].set_title("Señal Mezclada p")
-    axs[1,1].plot(f, np.real(fourierizar(q)), f, np.imag(fourierizar(q)))
-    axs[1,1].set_title("Señal Mezclada q")
-    axs[0,2].plot(f, np.real(fourierizar(x)), f, np.imag(fourierizar(x)))
-    axs[0,2].set_title("Señal Filtrada x")
-    axs[1,2].plot(f, np.real(fourierizar(y)), f, np.imag(fourierizar(y)))
-    axs[1,2].set_title("Señal Filtrada y")
-#    axs[1,2].plot(f, P)
-#    axs[1,2].set_title("Fase lock in")
+    mx = np.max(fourierizar(p))
+    axs[0,0].plot(f, fourierizar(r)/mx)
+    axs[0,0].set_title("R(f)")
+    axs[1,0].plot(f, fourierizar(v)/mx)
+    axs[1,0].set_title("V(f)")
+    axs[0,1].plot(f, fourierizar(p)/mx)
+    axs[0,1].set_title("P(f)")
+    axs[1,1].plot(f, fourierizar(q)/mx)
+    axs[1,1].set_title("Q(f)")
+    axs[0,2].plot(f, fourierizar(x)/mx)
+    axs[0,2].set_title("X(f)")
+    axs[1,2].plot(f, fourierizar(y)/mx)
+    axs[1,2].set_title("Y(f)")
+    for axx in axs:
+        for axy in axx:
+            axy.set_xlim([-100, 100])
+            axy.set_ylim([0, 1.2])
 
     plt.show()
