@@ -53,7 +53,7 @@ def get_snr(v, h1, h2):
     return snr_db
 
 
-def get_snrs(filename, plotting):
+def get_snrs(filename, f0, plotting):
     data = np.genfromtxt(filename, delimiter=' ')
     
     Vp = data[0,9]
@@ -63,7 +63,6 @@ def get_snrs(filename, plotting):
     fs = 1/Ts
     fn = fs/2
 
-    f0 = 30
     delta = 0.5
     N = 1001
 
@@ -87,17 +86,26 @@ def get_snrs(filename, plotting):
     return [snr_in, snr_out]
 
 labels = ['4V', '1V', '0.8V', '0.6V', '0.4V', '0.2V']
-filenames = ['sim_out_'+x+'4000.csv' for x in labels]
+filenamesR = ['sim_out_'+x+'4000.csv' for x in labels]
+filenamesC = ['Csim_out_'+x+'.csv' for x in labels]
 
 snrins = []
 snrouts = []
 snrgain = []
-for filename in filenames:
-    snr_in, snr_out = get_snrs(filename, False)
+for filename in filenamesR:
+    snr_in, snr_out = get_snrs(filename, 30, True)
     snrins.append(snr_in)
     snrouts.append(snr_out)
     snrgain.append(snr_out-snr_in)
     print("Ganancia en SNR = ", snr_out - snr_in, " dB")
+
+for filename in filenamesC:
+    snr_in, snr_out = get_snrs(filename, 23.405138, True)
+    snrins.append(snr_in)
+    snrouts.append(snr_out)
+    snrgain.append(snr_out-snr_in)
+    print("Ganancia en SNR = ", snr_out - snr_in, " dB")
+
 
 plt.plot(snrins)
 plt.plot(snrouts)
