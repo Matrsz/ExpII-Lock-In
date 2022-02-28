@@ -3,7 +3,7 @@ from uncertainties import ufloat
 import csv
 import matplotlib.pyplot as plt
 
-filename = 'sim_out.csv'
+filename = 'sim_out_pocoruido.csv'
 data = np.genfromtxt(filename, delimiter=' ')
 
 t, v, R, P = data[:,0], data[:, 1], data[:, 2], data[:, 3]
