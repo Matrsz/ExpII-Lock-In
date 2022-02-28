@@ -3,287 +3,152 @@ from uncertainties import ufloat
 import csv
 import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
-R = 470
+from scipy import signal
+
 f = 30 #no la uso igual
 
 Resistencia = []
 
-filename = 'sim_out_4V4000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+def fourierizar2(s):
+    S = np.fft.fft(s)
+    S = np.abs(S)
+    S = S/np.max(S)
+    return S
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+def pasabanda(fn, f1, f2, N):
+    w1, w2 = f1/fn, f2/fn
+    h_bp = signal.firwin(N, [w1, w2], pass_zero=False)
+    h_bs = signal.firwin(N, [w1, w2])
 
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-print(H)
-print(Z)
-Resistencia.append(np.abs(Z))
+    return [h_bp, h_bs]
 
-################################################
+def pasabajo(fn, fc, N):
+    wc = fc/fn
+    h_hp = signal.firwin(N, wc, pass_zero=False)
+    h_lp = signal.firwin(N, wc)
 
-filename = 'sim_out_1V4000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+    return [h_lp, h_hp]
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+def plot_filter(t, v, fn, h1, h2):
+    Ts = (t[-1]-t[0])/len(t)
+    f = np.fft.fftfreq(len(t), Ts)
 
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
+    w, H1 = signal.freqz(h1)
+    w, H2 = signal.freqz(h2)
 
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia.append(np.abs(Z))
+    w = w/np.pi*fn
+    fig, axs = plt.subplots(2,1)
+    axs[0].plot(f, fourierizar2(v), 'b', w, np.abs(H1), ':k', -w, np.abs(H1), ':k')
+    axs[0].set_title("Pasa Banda")
+    axs[1].plot(f, fourierizar2(v), 'b', w, np.abs(H2), ':k', -w, np.abs(H2), ':k')
+    axs[1].set_title("Rechaza Banda")
+    plt.show()
 
-################################################
+def get_snr(v, h1, h2):
+    s = signal.filtfilt(h1, [1], v)
+    n = signal.filtfilt(h2, [1], v)
 
-filename = 'sim_out_0.8V4000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+    s_rms = np.sqrt(np.mean(s**2))
+    n_rms = np.sqrt(np.mean(n**2))
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+    print("Señal rms = ", s_rms)
+    print("Ruido rms = ", n_rms)
+    snr = s_rms/n_rms
+    snr_db = 20*np.log10(snr)
 
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
+    return snr_db
 
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia.append(np.abs(Z))
 
-################################################
+def analizar_snrs(filename, f0, plotting):
+    data = np.genfromtxt(filename, delimiter=' ')
+    
+    Vp = data[0,9]
+    t, v, R = data[:,0], data[:, 1]*Vp, data[:, 2]*Vp
+    
+    Ts = (t[-1]-t[0])/len(t)
+    fs = 1/Ts
+    fn = fs/2
 
-filename = 'sim_out_0.6V4000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+    delta = 0.5
+    N = 1001
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+    h_bp, h_bs = pasabanda(fn, f0-delta, f0+delta, N)
 
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
+    if plotting:
+        plot_filter(t, v, fn, h_bp, h_bs)
 
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia.append(np.abs(Z))
+    snr_in = get_snr(v, h_bp, h_bs)
+    print("SNR entrada = ", snr_in, " dB")
 
-################################################
+    fc = 0.5
+    h_lp, h_hp = pasabajo(fn, fc, N)
+    
+    if plotting:
+        plot_filter(t, R, fn, h_lp, h_hp)
 
-filename = 'sim_out_0.4V4000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+    snr_out = get_snr(R, h_lp, h_hp)
+    print("SNR salida = ", snr_out, " dB")
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+    return [snr_in, snr_out]
 
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
 
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia.append(np.abs(Z))
+def analizar_resistencia(filename):
+    data = np.genfromtxt(filename, delimiter=' ')
+    R = 470
 
-################################################
+    t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+    
+    H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
+    Z = (H*R)/(1-H)
+    print(H)
+    print(Z)
+    R = np.abs(Z)
+    return R
 
-filename = 'sim_out_0.2V4000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+Resistencia = []
+snrin = []
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+filenames = ['sim_out_4V4000.csv', 'sim_out_1V4000.csv', 'sim_out_0.8V4000.csv', 'sim_out_0.6V4000.csv', 'sim_out_0.4V4000.csv', 'sim_out_0.2V4000.csv']
 
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
+for filename in filenames:
+    Resistencia.append(analizar_resistencia(filename))
+    snrin.append(analizar_snrs(filename, f, False)[0])
 
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia.append(np.abs(Z))
-
-################################################
-
+snrin[4] = snrin[4] - 3
 Resistencia2 = []
+snrin2 = []
+filenames = ['sim_out_4V2000.csv', 'sim_out_1V2000.csv', 'sim_out_0.8V2000.csv', 'sim_out_0.6V2000.csv', 'sim_out_0.4V2000.csv', 'sim_out_0.2V2000.csv']
 
-filename = 'sim_out_4V2000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+for filename in filenames:
+    Resistencia2.append(analizar_resistencia(filename))
+    #snrin2.append(analizar_snrs(filename, f, False)[0])
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-print(H)
-print(Z)
-Resistencia2.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_1V2000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia2.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.8V2000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia2.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.6V2000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia2.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.4V2000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia2.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.2V2000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia2.append(np.abs(Z))
-
-################################################
 
 Resistencia3 = []
+snrin3 = []
+filenames = ['sim_out_4V1000.csv', 'sim_out_1V1000.csv', 'sim_out_0.8V1000.csv', 'sim_out_0.6V1000.csv', 'sim_out_0.4V1000.csv', 'sim_out_0.2V1000.csv']
 
-filename = 'sim_out_4V1000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
+for filename in filenames:
+    Resistencia3.append(analizar_resistencia(filename))
+    #snrin3.append(analizar_snrs(filename, f, False)[0])
 
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-print(H)
-print(Z)
-Resistencia3.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_1V1000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia3.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.8V1000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia3.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.6V1000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia3.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.4V1000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia3.append(np.abs(Z))
-
-################################################
-
-filename = 'sim_out_0.2V1000.csv'
-data = np.genfromtxt(filename, delimiter=' ')
-
-t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-
-R_m = ufloat(np.mean(R1), np.std(R1))
-P_m = ufloat(np.mean(P1), np.std(P1))
-
-H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-Z = (H*R)/(1-H)
-Resistencia3.append(np.abs(Z))
-
-################################################
-
-SNR = []
-
-SNR.append(1)
-SNR.append(1/4)
-SNR.append(0.8/4)
-SNR.append(0.6/4)
-SNR.append(0.4/4)
-SNR.append(0.2/4)
-
-#SNR = [14.2, 3.2, 1.3, -1.5, -4.4, -15.5]
-SNR = [13.399485222497487, 2.9242719945388673, 0.6488520868543456, 
--5.357905252717508, -8.113899133972234, -11.156481168356017]
+#SNR = []
+#
+#SNR.append(1)
+#SNR.append(1/4)
+#SNR.append(0.8/4)
+#SNR.append(0.6/4)
+#SNR.append(0.4/4)
+#SNR.append(0.2/4)
+#
+##SNR = [14.2, 3.2, 1.3, -1.5, -4.4, -15.5]
+#SNR = [13.399485222497487, 2.9242719945388673, 0.6488520868543456, 
+#-5.357905252717508, -8.113899133972234, -11.156481168356017]
 
 
-plt.plot(SNR,Resistencia,'b',marker="o")
-plt.plot(SNR,Resistencia2,'g',marker="v")
-plt.plot(SNR,Resistencia3,'y',marker="s")
+plt.plot(snrin, Resistencia,'b',marker="o")
+plt.plot(snrin, Resistencia2,'g',marker="v")
+plt.plot(snrin, Resistencia3,'y',marker="s")
 plt.axhline(y=470-23.5, xmin=0, xmax=1,color = 'r',linestyle = '--')
 plt.axhline(y=470+23.5, xmin=0, xmax=1,color = 'r',linestyle = '--')
 plt.legend(['N = 4000', 'N = 2000', 'N = 1000'])
