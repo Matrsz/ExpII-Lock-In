@@ -64,7 +64,7 @@ def get_snrs(filename, f0, plotting):
     fn = fs/2
 
     delta = 0.5
-    N = 1001
+    N = 501
 
     h_bp, h_bs = pasabanda(fn, f0-delta, f0+delta, N)
 
@@ -93,15 +93,16 @@ snrins = []
 snrouts = []
 snrgain = []
 
+
 for filename in filenamesR:
-    snr_in, snr_out = get_snrs(filename, 30, False)
+    snr_in, snr_out = get_snrs(filename, 30, True)
     snrins.append(snr_in)
     snrouts.append(snr_out)
     snrgain.append(snr_out-snr_in)
     #print("Ganancia en SNR = ", snr_out - snr_in, " dB")
 
 for filename in filenamesC:
-    snr_in, snr_out = get_snrs(filename, 23.405138, False)
+    snr_in, snr_out = get_snrs(filename, 23.405138, True)
     snrins.append(snr_in)
     snrouts.append(snr_out)
     snrgain.append(snr_out-snr_in)
