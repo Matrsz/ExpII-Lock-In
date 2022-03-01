@@ -45,8 +45,8 @@ def get_snr(v, h1, h2):
     s_rms = np.sqrt(np.mean(s**2))
     n_rms = np.sqrt(np.mean(n**2))
 
-    print("Señal rms = ", s_rms)
-    print("Ruido rms = ", n_rms)
+#    print("Señal rms = ", s_rms)
+#    print("Ruido rms = ", n_rms)
     snr = s_rms/n_rms
     snr_db = 20*np.log10(snr)
 
@@ -86,7 +86,7 @@ def get_snrs(filename, f0, plotting):
     return [snr_in, snr_out]
 
 labels = ['4V', '1V', '0.8V', '0.6V', '0.4V', '0.2V']
-filenamesR = ['sim_out_'+x+'4000.csv' for x in labels]
+filenamesR = ['sim_out_'+x+'2000.csv' for x in labels]
 filenamesC = ['Csim_out_'+x+'.csv' for x in labels]
 
 snrins = []
