@@ -71,11 +71,15 @@
 En la figura \ref{fig:lockin} hay un lockin
 
 \section{Método Experimental}
-En primer lugar se ensambló el circuito de la F1. sobre 
+En primer lugar se midió la frecuencia máxima de 
+sampleo que permitía el dispositivo de medición.\\
+
+Luego se ensambló el circuito de la F1. sobre 
 un protoboard. Con ésto se evaluó el funcionamiento del
 lock-in en un circuito de carácter puramente resistivo 
 en donde se pudo obtener el valor de la resistencia 
-de carga RL.\\
+de carga RL.\\ 
+
 Se utilizaron dos generadores de señal RIGOL DG4102 
 para poder generar la señal de referencia y el ruido.
 Para sumar éstas dos señales se tuvo que "flotar"[1] la 
@@ -84,14 +88,23 @@ tierra propia, sino que utilizan la de la red eléctrica.\\
 
 Para la realización del lock-in se implementó un 
 script en python como se puede ver en el apéndice.
-En el código se importó la librería del 
+En el código se importó la librería del dispositivo 
+de medición, el 
 conversor analógico dígital USB-1408FS de la línea 
 MEASUREMENT COMPUTING para poder 
-calibrarlo y realizar las mediciones. Se implementaron 
-las etapas de la \ref{fig:lockin}, en donde se optó 
-por utilizar filtros FIR dada su versatilidad y sencillez.
+calibrarlo y realizar las mediciones.\\
+
+Se implementaron 
+las etapas de la figura \ref{fig:lockin}, en donde 
+se optó por utilizar filtros FIR dada su versatilidad 
+y sencillez.
 
 \section{Resultados}
+
+Se determinó que la frecuencia máxima de muestreo es 
+de aproximadamente 
+500Hz, con una frecuencia máxima medible de 250Hz, 
+según el teorema de uestreo de Nyquist[2].\\
 
 Se midió el valor de RL en función 
 de la relación señal a ruido en la entrada para tres 
@@ -131,7 +144,8 @@ VER SI CONVIENE PONER EN A TRABAJO FUTURO O MOVER EL PTO\\
 	\label{fig:RORDEN}
 \end{figure}
 
-Por último se armó el circutio de la F3. Con ésto 
+Por último se armó el circutio de la figura 
+\ref{fig:CvsSNR} .Con ésto 
 se midió el valor de la capacidad CL para poder 
 comprobar el funcionamiento del lock-in en 
 impedancias complejas.
@@ -145,9 +159,12 @@ impedancias complejas.
 
 
 \section{Discusión}
+-Orden del filtro\\
+-Pq usamos FIR y no IIR\\
+-Frecuencia de muestreo->usar otro dac\\
+-Pq tuvimos que flotar\\
 
 \section{Conclusiones}
-
 
 
 \bibliography{Antenas}
