@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 
+from matplotlib import rcParams
+rcParams['font.family'] = 'serif'
+
 
 # Si Nx >= Nh toma los últimos Nh elementos de x, si Nx < Nh completa x con 0s
 # Aplica el fir definido por h, retornando y[n] = el producto interno de h con x 
@@ -43,27 +46,36 @@ def fourierizar(s):
     #S = S/np.max(S)
     return S
 
+def fourierizar2(s):
+    S = np.fft.fft(s)
+    #S = np.split(S, 2)[0]
+    #S = S/np.max(S)
+    return S
+
 
 if __name__ == '__main__':  #void main
     fs = 500
     Ts = 1/fs
     N = 4000
     ts = np.arange(0, N*Ts, Ts)
-    fp = 40
+    fp = 50
     fm = 4
     rs = np.sin(2*np.pi*fp*ts)
+    rp = np.sin(2*np.pi*fp*ts-np.pi/6)
     m = np.sin(2*np.pi*fm*ts)
-    vs = np.multiply(rs, m)
+    vs = np.multiply(rp, m)
     ns = np.random.normal(0, 1, N)
     
-    fc = 5
-    orden = 500
+    fc = 6
+    orden = 1000
     fss = medir_fs(ts)
     h, tau = filtro(fss, fc, orden)
     
-    w, H = signal.freqz(h)
-    plt.plot(w/np.pi*fss/2, np.abs(H))
-    plt.show()
+    h2, tau2 = filtro(fss, fc, 50*orden)
+
+    w, H = signal.freqz(h2)
+    w = w/np.pi*fss/2
+    H = np.abs(H)
     
     t, v, r, x, y, p, q, R, P = [], [], [], [], [], [], [], [], []
     vaux = []
@@ -110,10 +122,8 @@ if __name__ == '__main__':  #void main
 
     for axx in axs:
         for axy in axx:
-            axy.set_xlim([7, 8])
+            #axy.set_xlim([7, 8])
             axy.set_ylim([-2.2, 2.2])
-
-
 
     plt.show()
     
@@ -121,22 +131,29 @@ if __name__ == '__main__':  #void main
 
     f = np.fft.fftfreq(len(t), 1/fs)
     #f = np.split(f, 2)[0]
-    mx = np.max(fourierizar(p))
+    mx = np.max(fourierizar(r))
     axs[0,0].plot(f, fourierizar(r)/mx)
     axs[0,0].set_title("R(f)")
     axs[1,0].plot(f, fourierizar(v)/mx)
     axs[1,0].set_title("V(f)")
-    axs[0,1].plot(f, fourierizar(p)/mx)
-    axs[0,1].set_title("P(f)")
-    axs[1,1].plot(f, fourierizar(q)/mx)
-    axs[1,1].set_title("Q(f)")
+    axs[0,1].plot(w, H, ':k', -w, H, ':k', f, fourierizar(p)/mx)
+    axs[0,1].set_title("P(f) = R(f)∗V(f)")
+    axs[0,1].legend(["H(f)"])
+    axs[1,1].plot(w, H, ':k', -w, H, ':k', f, fourierizar(q)/mx)
+    axs[1,1].set_title("Q(f) = Ř(f)∗V(f)")
+    axs[1,1].legend(["H(f)"])
     axs[0,2].plot(f, fourierizar(x)/mx)
-    axs[0,2].set_title("X(f)")
+    axs[0,2].set_title("X(f)=P(f)·H(f)")
     axs[1,2].plot(f, fourierizar(y)/mx)
-    axs[1,2].set_title("Y(f)")
+    axs[1,2].set_title("Y(f)=Q(f)·H(f)")
     for axx in axs:
         for axy in axx:
-            axy.set_xlim([-100, 100])
-            axy.set_ylim([0, 1.2])
-
+            axy.set_xlim([-120, 120])
+            axy.set_ylim([0, 1.1])
+            #axy.grid(axis='x')
+            axy.set_xticklabels([])
+            axy.set_yticklabels([])
+            axy.yaxis.set_ticks_position('none')
+    
+    plt.tight_layout()
     plt.show()
