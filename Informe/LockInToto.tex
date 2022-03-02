@@ -97,18 +97,38 @@ calibrarlo y realizar las mediciones.\\
 Se implementaron 
 las etapas de la figura \ref{fig:lockin}, en donde 
 se optó por utilizar filtros FIR dada su versatilidad 
-y sencillez.
+y sencillez.\\
+
+El programa toma la señal v(t)
+y la normaliza utilizando su máximo valor de amplitud,
+ siendo ésta la tensión de referencia. Además se mide 
+ la señal r(t) y se le aumenta la amplitud en un factor
+ de 2 por el desarrollo que se necesita [Apéndice].
+Se genera la señal p(t) mediante la multiplicación de 
+las dos señales tomadas.
+Luego se genera la señal q(t) desfasando 90◦
+la señal 
+mediante la transformada de Hilbert.
+Por último se aplican filtros pasa bajos,
+ obteniendo respectivamente las salidas x(t) e y(t),
+  necesarias para obtener los
+valores de amplitud y fase de la señal v(t).
+
 
 \section{Resultados}
 
+Falta analizar que puntos usar de las gráficas y reportar
+el valor RL = ... +/- ..., CL = ... +/- ...
+Se podría hacer un promedio de los valores, y el error hay 
+que ver como pingo calcularlo/maquillarlo\\
 Se determinó que la frecuencia máxima de muestreo es 
 de aproximadamente 
 500Hz, con una frecuencia máxima medible de 250Hz, 
-según el teorema de uestreo de Nyquist[2].\\
+según el teorema de muestreo de Nyquist[2].\\
 
 Se midió el valor de RL en función 
 de la relación señal a ruido en la entrada para tres 
-filtros FIR de distintos orden.
+filtros FIR de distinto orden.
 Se puede apreciar que el filto óptimo es el de mayor 
 orden, dado que se utilizan mayor cantidad de 
 mediciones para generar las señales medidas.
@@ -137,6 +157,12 @@ ESTARIA BUENO QUE EL ULTIMO PTO DE LA GRAFICA \ref{fig:RORDEN}
 ESTE MAS ARRIBA PARA PODER HACER ESTA AFIRMACION 
 VER SI CONVIENE PONER EN A TRABAJO FUTURO O MOVER EL PTO\\
 
+Cabe aclarar que los valores de resistencia que estamos
+ midiendo están dos ordenes de magnitud por de 
+ bajo de la impedancias de entrada del dac, y al ser 
+una conexión en paralelo predomina el valor de la resistencia 
+que deseamos obtener.\\
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/RORDEN.png}
@@ -148,7 +174,7 @@ Por último se armó el circutio de la figura
 \ref{fig:CvsSNR} .Con ésto 
 se midió el valor de la capacidad CL para poder 
 comprobar el funcionamiento del lock-in en 
-impedancias complejas.
+impedancias complejas.\\ 
 
 \begin{figure}[H]
 	\centering
@@ -163,9 +189,24 @@ impedancias complejas.
 -Pq usamos FIR y no IIR\\
 -Frecuencia de muestreo->usar otro dac\\
 -Pq tuvimos que flotar\\
+-Hacer más mediciones en el capacitor entre -5dB y -15db, 
+porque en la resistencia llega hasta -12dB como mínimo.
+Con respecto a ésto, ¿descartamos 4 puntos en el gráfica de 
+la capacitancia?, nos queda sólo 1 :(
 
 \section{Conclusiones}
 
+Si bien los amplificadores lock-in comerciales resuelven 
+mediciones con SNR de 1:1000(VER), se encuentra satisfactorio 
+el rendimiento del lock-in digital desarrollado, con 
+una implementación relativamente sencilla.\\
+
+Se concluye que la mínima SNR de entrada para el 
+correcto funcionamiento del lock-in implementado es de 
+aproximadamente unos -6dB.(VER BIEN QUE VALOR DECIR, 
+en dB o en 1:10 por ejemplo)
+
+\section{Referencias}
 
 \bibliography{Antenas}
 \bibliographystyle{ieeetr}
