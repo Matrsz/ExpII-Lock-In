@@ -287,7 +287,21 @@ conviene en dB o en 1:10 por ejemplo)
 \hrule
 \vspace{1em}
 \normalsize
-\section{Apéndice 1 - apéndice}
+\section{Apéndice 1 - Medición de SNR de Entrada}
 \end{appendices}
+
+\begin{multicols}{2}
+\normalsize
+A la entrada del lock in se mide $v(t) = s(t) + n(t)$. Es de interés para la práctica conocer la relación señal ruido, definida por la relación entre medias cuadráticas
+
+\begin{equation}
+	SNR = \frac{E\left[s^2(t)\right]}{E\left[n^2\right(t)]}
+\end{equation}\\[-1em]
+
+Sin embargo, se desconocen las componentes individuales $s(t)$, $n(t)$ únicamente se conoce su suma y la frecuencia de $s(t)$.\\
+
+Esto permite aproximar $s(t)$ y $n(t)$ usando filtros muy selectivos a frecuencia central $f_0$.
+
+\end{multicols}
 
 \end{document}

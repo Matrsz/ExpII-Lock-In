@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 from scipy import signal
 
+from matplotlib import rcParams
+rcParams['font.family'] = 'serif'
+
 f = 30 #no la uso igual
 
 Resistencia = []
@@ -38,10 +41,19 @@ def plot_filter(t, v, fn, h1, h2):
 
     w = w/np.pi*fn
     fig, axs = plt.subplots(2,1)
-    axs[0].plot(f, fourierizar2(v), 'b', w, np.abs(H1), ':k', -w, np.abs(H1), ':k')
+#    axs[0].plot(f, fourierizar2(v), 'b', w, np.abs(H1), ':k', -w, np.abs(H1), ':k')
+    axs[0].plot(f, fourierizar2(v), w, np.abs(H1), '--k', -w, np.abs(H1), ':k')
+    axs[0].legend(["V(f)", "H₁(f)"], loc="upper right")
     axs[0].set_title("Pasa Banda")
-    axs[1].plot(f, fourierizar2(v), 'b', w, np.abs(H2), ':k', -w, np.abs(H2), ':k')
+    axs[1].plot(f, fourierizar2(v), w, np.abs(H2), '--k', -w, np.abs(H2), ':k')
+    axs[1].legend(["V(f)", "H₂(f)"], loc="upper right")
     axs[1].set_title("Rechaza Banda")
+    for ax in axs:
+        ax.set_xlim([0, max(f)])
+        ax.set_yticklabels([])
+        ax.yaxis.set_ticks_position('none')
+
+    plt.tight_layout()
     plt.show()
 
 def get_snr(v, h1, h2):
@@ -70,7 +82,7 @@ def analizar_snrs(filename, f0, plotting):
     fn = fs/2
 
     delta = 0.5
-    N = 1001
+    N = 10001
 
     h_bp, h_bs = pasabanda(fn, f0-delta, f0+delta, N)
 
@@ -110,9 +122,11 @@ snrin = []
 
 filenames = ['sim_out_4V4000.csv', 'sim_out_1V4000.csv', 'sim_out_0.8V4000.csv', 'sim_out_0.6V4000.csv', 'sim_out_0.4V4000.csv', 'sim_out_0.2V4000.csv']
 
+filenames = ['sim_out_0.8V4000.csv', 'sim_out_0.2V4000.csv']
+
 for filename in filenames:
     Resistencia.append(analizar_resistencia(filename))
-    snrin.append(analizar_snrs(filename, f, False)[0])
+    snrin.append(analizar_snrs(filename, f, True)[0])
 
 snrin[4] = snrin[4] - 3
 Resistencia2 = []
