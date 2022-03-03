@@ -56,9 +56,30 @@ def plot_filter(t, v, fn, h1, h2):
     plt.tight_layout()
     plt.show()
 
-def get_snr(v, h1, h2):
+def plot_time(t, v, s, n):
+    fig, axs = plt.subplots(3,1)
+#    axs[0].plot(f, fourierizar2(v), 'b', w, np.abs(H1), ':k', -w, np.abs(H1), ':k')
+    axs[0].plot(t, v)
+    axs[0].set_title("v(t)=s(t)+n(t)")
+    axs[1].plot(t, s)
+    axs[1].set_title("s(t)")
+    axs[2].plot(t, n)
+    axs[2].set_title("n(t)")
+
+    for ax in axs:
+        ax.set_xlim([39, 40])
+        ax.set_yticklabels([])
+        ax.yaxis.set_ticks_position('none')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def get_snr(v, h1, h2, t):
     s = signal.filtfilt(h1, [1], v)
     n = signal.filtfilt(h2, [1], v)
+
+    plot_time(t, v, s, n)
 
     s_rms = np.sqrt(np.mean(s**2))
     n_rms = np.sqrt(np.mean(n**2))
@@ -82,14 +103,14 @@ def analizar_snrs(filename, f0, plotting):
     fn = fs/2
 
     delta = 0.5
-    N = 10001
+    N = 1001
 
     h_bp, h_bs = pasabanda(fn, f0-delta, f0+delta, N)
 
     if plotting:
         plot_filter(t, v, fn, h_bp, h_bs)
 
-    snr_in = get_snr(v, h_bp, h_bs)
+    snr_in = get_snr(v, h_bp, h_bs, t)
     print("SNR entrada = ", snr_in, " dB")
 
     fc = 0.5
@@ -98,7 +119,7 @@ def analizar_snrs(filename, f0, plotting):
     if plotting:
         plot_filter(t, R, fn, h_lp, h_hp)
 
-    snr_out = get_snr(R, h_lp, h_hp)
+    snr_out = get_snr(R, h_lp, h_hp, t)
     print("SNR salida = ", snr_out, " dB")
 
     return [snr_in, snr_out]
@@ -122,7 +143,7 @@ snrin = []
 
 filenames = ['sim_out_4V4000.csv', 'sim_out_1V4000.csv', 'sim_out_0.8V4000.csv', 'sim_out_0.6V4000.csv', 'sim_out_0.4V4000.csv', 'sim_out_0.2V4000.csv']
 
-filenames = ['sim_out_0.8V4000.csv', 'sim_out_0.2V4000.csv']
+#filenames = ['sim_out_0.8V4000.csv', 'sim_out_0.2V4000.csv']
 
 for filename in filenames:
     Resistencia.append(analizar_resistencia(filename))

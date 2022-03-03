@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 from scipy import signal
 
+from matplotlib import rcParams
+rcParams['font.family'] = 'serif'
+
 f = 23.405158 #no la uso igual
 
 Resistencia = []
@@ -38,15 +41,48 @@ def plot_filter(t, v, fn, h1, h2):
 
     w = w/np.pi*fn
     fig, axs = plt.subplots(2,1)
-    axs[0].plot(f, fourierizar2(v), 'b', w, np.abs(H1), ':k', -w, np.abs(H1), ':k')
+#    axs[0].plot(f, fourierizar2(v), 'b', w, np.abs(H1), ':k', -w, np.abs(H1), ':k')
+    axs[0].plot(f, fourierizar2(v), w, np.abs(H1), '--k', -w, np.abs(H1), ':k')
+    axs[0].legend(["V(f)", "H₁(f)"], loc="upper right")
     axs[0].set_title("Pasa Banda")
-    axs[1].plot(f, fourierizar2(v), 'b', w, np.abs(H2), ':k', -w, np.abs(H2), ':k')
+    axs[1].plot(f, fourierizar2(v), w, np.abs(H2), '--k', -w, np.abs(H2), ':k')
+    axs[1].legend(["V(f)", "H₂(f)"], loc="upper right")
     axs[1].set_title("Rechaza Banda")
+    for ax in axs:
+        ax.set_xlim([0, max(f)])
+        ax.set_yticklabels([])
+        ax.yaxis.set_ticks_position('none')
+
+    plt.tight_layout()
     plt.show()
 
-def get_snr(v, h1, h2):
+def plot_time(t, v, s, n):
+    fig, axs = plt.subplots(3,1)
+#    axs[0].plot(f, fourierizar2(v), 'b', w, np.abs(H1), ':k', -w, np.abs(H1), ':k')
+    axs[0].plot(t, v)
+    axs[0].set_title("v(t)=s(t)+n(t)")
+    axs[1].plot(t, s)
+    axs[1].set_title("s(t)")
+    axs[2].plot(t, n)
+    axs[2].set_title("n(t)")
+    vmin, vmax = np.min(v), np.max(v)
+
+    for ax in axs:
+        ax.set_xlim([39, 40])
+        ax.set_ylim([vmin*1.05, vmax*1.05])
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.yaxis.set_ticks_position('none')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def get_snr(v, h1, h2, t):
     s = signal.filtfilt(h1, [1], v)
     n = signal.filtfilt(h2, [1], v)
+
+    plot_time(t, v, s, n)
 
     s_rms = np.sqrt(np.mean(s**2))
     n_rms = np.sqrt(np.mean(n**2))
@@ -77,20 +113,20 @@ def analizar_snrs(filename, f0, plotting):
     if plotting:
         plot_filter(t, v, fn, h_bp, h_bs)
 
-    snr_in = get_snr(v, h_bp, h_bs)
+    snr_in = get_snr(v, h_bp, h_bs, t)
     print("SNR entrada = ", snr_in, " dB")
 
     fc = 0.5
     h_lp, h_hp = pasabajo(fn, fc, N)
     
-    if plotting:
-        plot_filter(t, R, fn, h_lp, h_hp)
+    #if plotting:
+    #    plot_filter(t, R, fn, h_lp, h_hp)
 
-    snr_out = get_snr(R, h_lp, h_hp)
+    #snr_out = get_snr(R, h_lp, h_hp, t)
+    snr_out = 1
     print("SNR salida = ", snr_out, " dB")
 
     return [snr_in, snr_out]
-
 
 def analizar_cap(filename):
     data = np.genfromtxt(filename, delimiter=' ')
@@ -107,29 +143,12 @@ def analizar_cap(filename):
 Resistencia = []
 snrin = []
 
-filenames = ['sim_out_4V4000.csv', 'sim_out_1V4000.csv', 'sim_out_0.8V4000.csv', 'sim_out_0.6V4000.csv', 'sim_out_0.4V4000.csv', 'sim_out_0.2V4000.csv']
+filenames = ['sim_out_4V.csv', 'sim_out_1V.csv', 'sim_out_0.8V.csv', 'sim_out_0.6V.csv', 'sim_out_0.4V.csv', 'sim_out_0.2V.csv']
 
 for filename in filenames:
     Resistencia.append(analizar_cap(filename))
-    snrin.append(analizar_snrs(filename, f, False)[0])
+    snrin.append(analizar_snrs(filename, f, True)[0])
 
-snrin[4] = snrin[4] - 3
-Resistencia2 = []
-snrin2 = []
-filenames = ['sim_out_4V2000.csv', 'sim_out_1V2000.csv', 'sim_out_0.8V2000.csv', 'sim_out_0.6V2000.csv', 'sim_out_0.4V2000.csv', 'sim_out_0.2V2000.csv']
-
-for filename in filenames:
-    Resistencia2.append(analizar_cap(filename))
-    #snrin2.append(analizar_snrs(filename, f, False)[0])
-
-
-Resistencia3 = []
-snrin3 = []
-filenames = ['sim_out_4V1000.csv', 'sim_out_1V1000.csv', 'sim_out_0.8V1000.csv', 'sim_out_0.6V1000.csv', 'sim_out_0.4V1000.csv', 'sim_out_0.2V1000.csv']
-
-for filename in filenames:
-    Resistencia3.append(analizar_cap(filename))
-    #snrin3.append(analizar_snrs(filename, f, False)[0])
 
 #SNR = []
 #
@@ -146,8 +165,6 @@ for filename in filenames:
 
 
 plt.plot(snrin, Resistencia,'b',marker="o")
-plt.plot(snrin, Resistencia2,'g',marker="v")
-plt.plot(snrin, Resistencia3,'y',marker="s")
 plt.axhline(y=470-23.5, xmin=0, xmax=1,color = 'r',linestyle = '--')
 plt.axhline(y=470+23.5, xmin=0, xmax=1,color = 'r',linestyle = '--')
 plt.legend(['N = 4000', 'N = 2000', 'N = 1000'])
