@@ -170,7 +170,7 @@ RL = 0
 for i in range(0,4,1):
     RL = RL + Resistencia[i]*Coeficientes[i]
     print(i)
-Incerteza = (Resistencia[4] - Resistencia[0])/2
+Incerteza = (Resistencia[3] - Resistencia[0])/2
 print("RL: ",RL, " ± ",Incerteza)
-print("Entonces reportare (460±40)Ω => incerteza relativa de 8.7%")
+print("Entonces reportare (460±20)Ω => incerteza relativa de 4.3%")
 
