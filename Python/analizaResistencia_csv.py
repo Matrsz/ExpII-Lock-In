@@ -156,3 +156,21 @@ plt.xlabel("SNR[dB]")
 plt.ylabel("RESISTENCIA[Ω]")
 plt.grid()
 plt.show()
+
+#REPORTAR RL, promedio ponderado:
+
+# Resistencia:  [449.41819970479435, 461.1614183033961, 
+# 468.39764731684977, 475.4430891343917, 518.8765566995003, 779.5540363354934]
+
+#SNR:  [13.399485222497487, 2.9242719945388673, 0.6488520868543456,
+#  -5.357905252717508, -8.113899133972234, -11.156481168356017]
+
+Coeficientes = [0.4, 0.3, 0.2, 0.1]
+RL = 0
+for i in range(0,4,1):
+    RL = RL + Resistencia[i]*Coeficientes[i]
+    print(i)
+Incerteza = (Resistencia[4] - Resistencia[0])/2
+print("RL: ",RL, " ± ",Incerteza)
+print("Entonces reportare (460±40)Ω => incerteza relativa de 8.7%")
+

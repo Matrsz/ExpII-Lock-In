@@ -101,3 +101,16 @@ plt.ylabel("CAPACIDAD[μF]")
 plt.legend(['N = 4000'])
 plt.grid()
 plt.show()
+
+#REPORTAR C:
+#C =  [0.7195435971775558, 0.619710659614806, 0.5776950161874959, 0.4488067614795317, 0.241330401207723]
+#SNR =  [-3.2493957646772498, -15.304125219585893, -17.55847698803266, -19.837388494926927, -23.53116735143342]   
+
+Coeficientes = [0.6, 0.25, 0.15]
+CL = 0
+for i in range(0,3,1):
+    CL = CL + C[i]*Coeficientes[i]
+    print(i)
+Incerteza = (C[0] - C[2])/2
+print("CL: ",CL, " ± ",Incerteza)
+print("Entonces reportare (0.67±0.0.07)µF => incerteza relativa de 10.4%")
