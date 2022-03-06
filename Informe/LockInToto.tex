@@ -51,13 +51,26 @@
 \rfoot{\thepage} 
 \renewcommand{\headrulewidth}{0.4pt} 
 \renewcommand{\footrulewidth}{0.4pt} 
-\pagestyle{fancy}
-
 \hrule
-\begin{multicols}{2}
+
 \normalsize
 \section{Resumen}
+Se diseño y desarrollo un amplificador Lock In 
+mediante sofware en lenguaje python. 
+Se utilizaron dos generadores de onda, uno para originar 
+la señal de referencia y otro para agregar ruido. 
+El funcionamiento del mismo se evaluó mediante 
+mediciones de impedancias conocidas, en donde el ruido 
+fue ordenes de magnitud mayor a la magnitud de la señal 
+de interés. Se analizaron los
+resultados obtenidos para distintas relaciones 
+señal-ruido, resultando los valores RL = ... +/- ...,
+ CL = ... +/- ... dentro de
+la cota del error tabulado para relaciones menores a 
+"-6dB por ejemplo".
 
+
+\begin{multicols}{2}
 \section{Introducción}
 
 \begin{figure}[H]
@@ -196,15 +209,15 @@ la capacitancia?, nos queda sólo 1 :(
 
 \section{Conclusiones}
 
-Si bien los amplificadores lock-in comerciales resuelven 
-mediciones con SNR de 1:1000(VER), se encuentra satisfactorio 
-el rendimiento del lock-in digital desarrollado, con 
+Si bien los amplificadores lock in comerciales resuelven 
+mediciones con SNR de 1:1000, es decir 60dB,
+ se encuentra satisfactorio 
+el rendimiento del lock in digital desarrollado, con 
 una implementación relativamente sencilla.\\
 
 Se concluye que la mínima SNR de entrada para el 
-correcto funcionamiento del lock-in implementado es de 
-aproximadamente unos -6dB.(VER BIEN QUE VALOR DECIR, 
-en dB o en 1:10 por ejemplo)
+correcto funcionamiento del lock in implementado es de 
+aproximadamente unos "-6dB por ejemplo".
 
 \section{Referencias}
 
