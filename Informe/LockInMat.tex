@@ -38,7 +38,7 @@
 \begin{large}
 \small\textsc{Horst, Raúl Tomás}\\
 \small\textsc{Roqueta, Matías Daniel}\\
-\small{Centro Atómico Bariloche y Instituto Balseiro, Comisión Nacional de Energía Atómica}\\
+\small{Instituto Balseiro, Centro Atómico Bariloche, Comisión Nacional de Energía Atómica}\\
 \end{large}
 \setcounter{page}{1}
 
@@ -54,10 +54,24 @@
 \pagestyle{fancy}
 
 \hrule
-\begin{multicols}{2}
 \normalsize
 \section{Resumen}
+Se diseño y desarrollo un amplificador lock in 
+mediante sofware en lenguaje python. 
+Se utilizaron dos generadores de onda, uno para originar 
+la señal de referencia y otro para agregar ruido. 
+El funcionamiento del mismo se evaluó mediante 
+mediciones de impedancias conocidas, en donde el ruido 
+fue ordenes de magnitud mayor a la magnitud de la señal 
+de interés. Se analizaron los
+resultados obtenidos para distintas relaciones 
+señal-ruido, resultando los valores $RL$ = (... ± ...) Ω,
+$C$ = (... ± ...) µF dentro de
+la cota del error tabulado para relaciones menores a 
+'-6dB por ejemplo'.
 
+
+\begin{multicols}{2}
 \section{Introducción}
 
 Un amplificador lock in es un dispositvo electrónico capaz de extraer la fase y amplitud de una señal de banda angosta medida en un ambiente ruidoso.\\
@@ -115,7 +129,7 @@ En estas condiciones, se mide
 
 La relación $v(t) = H r(t)$ con $H \in \mathbb C$ implica que el ancho de banda de la señal a medir puede considerarse arbitrariamente chico.\\
 
-El filtro elegido fue un FIR digital por su simplicidad de implemntación. Aplicar el filtro de orden N se reduce a un único producto interno vectorial
+El filtro elegido fue un FIR digital[3] por su simplicidad de implemntación. Aplicar el filtro de orden N se reduce a un único producto interno vectorial
 
 \begin{equation}\label{eq:fir}
 	y_i = \sum_{j=0}^N h_jx_{i-j}= 
@@ -143,11 +157,20 @@ Ya que lo que interesa medir en nuestro circuito es transferencia, resulta útil
 \end{figure}
 
 \section{Método Experimental}
+
 En primer lugar se midió la frecuencia máxima de 
-sampleo que permitía el dispositivo de medición.\\
+muestreo que permite el dispositivo de medición, esta es necesaria para diseñar los filtros digitales y para conocer la máxima frecuencia de señal que se puede medir.\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Images/circuito.eps}
+	\caption{Circuito usado en el experimento. Los generadores de señal son RIGOL DG4102. El conversor analógico digital es Measurement Computing USB-1408FS.}
+	\label{fig:circuito}
+\end{figure}
+
 
 Luego se ensambló el circuito de la figura 
-\ref{fig:transferencia}, en donde $ZL$ era de carácter
+\ref{fig:circuito}, en donde $ZL$ era de carácter
  puramente resistivo, y se pudo obtener 
 el valor de la resistencia de carga $RL = ZL$ para 
 comprobar el funcionamiento del lock in en el caso 
@@ -170,7 +193,7 @@ calibrarlo y realizar las mediciones.\\
 Se implementaron 
 las etapas de la figura \ref{fig:nuestro_lockin},
  en donde se optó por utilizar filtros FIR dada 
- su versatilidad y sencillez.\\
+ su versatilidad y sencillez de implementación.\\
 
 El programa toma la señal $v(t)$
 y la normaliza utilizando su máximo valor de amplitud,
@@ -208,7 +231,10 @@ mediciones para generar las señales medidas.
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/RvsSNR(segunda).png}
-	\caption{RvsSNR}
+	\caption{Resistencia de carga $RL$ obtenida con 
+	el lock in en función
+	de la relación señal ruido. Se obtuvo 
+	$RL$ = (... ± ...) Ω.}
 	\label{fig:RvsSNR}
 \end{figure}
 
@@ -227,14 +253,17 @@ lock in es el ruido a la entrada.\\
 
 Cabe aclarar que los valores de resistencia que estamos
  midiendo están dos ordenes de magnitud por de 
- bajo de la impedancias de entrada del dac, y al estar en 
+ bajo de la impedancias de entrada del adc, y al estar en 
 una conexión en paralelo predomina el valor de la resistencia 
 que deseamos obtener.\\
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/RORDEN.png}
-	\caption{RORDEN}
+	\caption{Resistencia de carga $RL$ obtenida con 
+	el lock in en función
+	del orden del filtro empleado para  
+	una relación señal ruido de -22.5dB}
 	\label{fig:RORDEN}
 \end{figure}
 
@@ -247,36 +276,47 @@ impedancias complejas.\\
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/CvsSNR(segunda).png}
-	\caption{RvsSNR}
+	\caption{Capacidad de carga $C$ obtenida con 
+	el lock in en función
+	de la relación señal ruido. Se obtuvo 
+	$C$ = (... ± ...) µF.}
 	\label{fig:CvsSNR}
 \end{figure}
 
 
 \section{Discusión}
-Discusión o trabajo a futuro:\\
--Frecuencia de muestreo ¿usar otro dac?\\
--Orden del filtro\\
--Pq tuvimos que flotar\\
--Hacer más mediciones en el capacitor entre -5dB y -15db, 
-porque en la resistencia llega hasta -12dB como mínimo.
-Con respecto a ésto, ¿descartamos 4 puntos en el gráfica de 
-la capacitancia?, nos quedaría sólo 1...
+A la hora de implementar el lock in diseñado se tuvo 
+la limitancia de un valor bajo en la frecuencia de 
+muestreo máxima que permitía el adc utilizado, por lo 
+que se sugiere renovar éste 
+dispositivo para poder tener un mayor 
+rango de funcionamiento.\\
+
+Se recomienda no realizar mediciones 
+en la que la frecuencia de referencia sea 
+similar a la frecuencia de la red dado que 
+ésto introduce un mayor nivel de ruido.
+
 
 \section{Conclusiones}
 
 Si bien los amplificadores lock in comerciales resuelven 
-mediciones con SNR de 1:1000, se encuentra satisfactorio 
+mediciones con SNR de 1:1000, es decir 60dB,
+ se encuentra satisfactorio 
 el rendimiento del lock in digital desarrollado, con 
 una implementación relativamente sencilla.\\
 
 Se concluye que la mínima SNR de entrada para el 
 correcto funcionamiento del lock in implementado es de 
-aproximadamente unos "-6dB por ejemplo".(VER BIEN QUE 
-CRITERIO UTILIZAR PARA DAR EL VALOR, y si 
-conviene en dB o en 1:10 por ejemplo)
+aproximadamente unos '-6dB por ejemplo'.
 
 \section{Referencias}
+[1] Principles of lock-in detection
+and the state of the art. Zurich Instruments (2016).\\
 
+[2] Señales y Sistemas. Hayking. Capítulo 4. (muestreo)\\
+
+[3] Señales y Sistemas. Hayking. Capítulo 8. (filtro FIR)
 \bibliography{Antenas}
 \bibliographystyle{ieeetr}
 
@@ -287,7 +327,52 @@ conviene en dB o en 1:10 por ejemplo)
 \hrule
 \vspace{1em}
 \normalsize
-\section{Apéndice 1 - apéndice}
+\section{Apéndice 1 - Medición de SNR de Entrada}
 \end{appendices}
+
+\begin{multicols}{2}
+\normalsize
+A la entrada del lock in se mide $v(t) = s(t) + n(t)$. Es de interés para la práctica conocer la relación señal ruido, definida por la relación entre medias cuadráticas
+
+\begin{equation}\label{eq:snr}
+	SNR = \frac{E\left[s^2(t)\right]}{E\left[n^2\right(t)]}
+\end{equation}\\[-1em]
+
+Sin embargo, se desconocen las componentes individuales $s(t)$, $n(t)$ únicamente se conoce su suma y la frecuencia de $s(t)$.\\
+
+Esto permite aproximar $s(t)$ y $n(t)$ usando filtros muy selectivos a frecuencia central $f_0$. Un filtro pasa banda para aproximar $s(t)$ y uno rechaza banda para aproximar $n(t)$, tal como indica la figura \ref{fig:circ_snr}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Images/circ_snr.eps}
+	\caption{Diagrama lógico de aproximación $s(t)$ y $n(t)$}
+	\label{fig:circ_snr}
+\end{figure}
+
+Una realización de este proceso en el dominio de la frecuencia ante una medición de $v(t)$ se presenta en la figura \ref{fig:snr_filtros}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Images/snr_filtros.eps}
+	\caption{Realización del circuito \ref{fig:circ_snr} en el dominio de la frecuencia.}
+	\label{fig:snr_filtros}
+\end{figure}
+
+Resulta útil visualizar las señales en el dominio del tiempo para confirmar que el comportamiento del filtro es el esperado, la figura \ref{fig:snr_tiempo} es una realización del proceso con datos medidos experimentalmente.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Images/snr_tiempo.eps}
+	\caption{Efecto de la aplicación del circuito \ref{fig:circ_snr} a una señal ruidosa.}
+	\label{fig:snr_tiempo}
+\end{figure}
+
+Las señales resultantes son usadas en la ecuación \ref{eq:snr}, y el resultado se informa en dB según la expresión
+
+\begin{equation}\label{eq:snr_db}
+	SNR_{dB} = 20\log_{10}\frac{E\left[s^2(t)\right]}{E\left[n^2\right(t)]}
+\end{equation}
+
+\end{multicols}
 
 \end{document}
