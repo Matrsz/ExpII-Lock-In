@@ -79,7 +79,7 @@ Un amplificador lock in es un dispositvo electrónico capaz de extraer la fase y
 
 El funcionamiento del lock in equiere información de la dependencia temporal de la señal de interés, que es aportada por una señal de referencia. Según la implementación, la señal de referencia puede ser inyectada al lock in de una fuente externa o generada internamente.\\ 
 
-El lock in recupera la señal de interés multiplicando a esta por la referencia en fase y cuadratura, y aplicando un filtro pasa bajo al producto de señales. Este proceso es llamado \textit{demodulación coherente}.\\
+El lock in recupera la señal de interés multiplicando a esta por la referencia en fase y cuadratura, y aplicando un filtro pasa bajo al producto de señales. Este proceso es llamado \textit{demodulación coherente}. \cite{zurich}\\
 
 \begin{figure}[H]
 	\centering
@@ -130,25 +130,31 @@ En estas condiciones, se mide
 
 La relación $v(t) = H r(t)$ con $H \in \mathbb C$ implica que el ancho de banda de la señal a medir puede considerarse arbitrariamente chico.\\
 
-El filtro elegido fue un FIR digital[3] por su simplicidad de implemntación. Aplicar el filtro de orden N se reduce a un único producto interno vectorial
+El filtro elegido fue un FIR por su facilidad de implemntación y diseño respecto al IIR.\cite{haykin_8}
+\begin{itemize}
+	\item Al no tener polos en su función de transferencia, un FIR es siempre estable.
+	\item La respuesta es de fase constante lo, cual permite conocer su retardo de grupo según la ecuación
 
-\begin{equation}\label{eq:fir}
-	y_i = \sum_{j=0}^N h_jx_{i-j}= 
-	\begin{bmatrix}
-		x_i & \cdots & x_{i-N}
-	\end{bmatrix}
-	\begin{bmatrix}
-		h_0 \\ \vdots \\ h_N	
-	\end{bmatrix}
-\end{equation}\\[-1em]
+	\begin{equation}\label{eq:tau}
+		\tau = \frac{N-1}{2f_s}
+	\end{equation}
+	\item La aplicación de un FIR de respuesta al impulso $h$ a una señal $x$ es un único producto interno
+	\begin{equation}\label{eq:fir}
+		y_i = \sum_{j=0}^N h_jx_{i-j}= 
+		\begin{bmatrix}
+			x_i & \cdots & x_{i-N}
+		\end{bmatrix}
+		\begin{bmatrix}
+			h_0 \\ \vdots \\ h_N	
+		\end{bmatrix}
+	\end{equation}
+\end{itemize} 
 
-El filtro FIR es generado con la función \texttt{firwin} perteneciente a \texttt{scipy.signal} que garantiza fase constante, lo que permite fácilmente conocer su retardo de grupo a frecuencia de muestreo $f_s$
 
-\begin{equation}\label{eq:tau}
-	\tau = \frac{N-1}{2f_s}
-\end{equation}\\[-1em]
+Conociendo el valor de $\tau$ se decide a partir de que instante registrar valores tal de medir únicamente en régimen estacionario. Se elije la convención de que el régimen estacionario empieza a $t \ge 5\tau$.\\
 
-Ya que lo que interesa medir en nuestro circuito es transferencia, resulta útil normalizar los valores a fin de independizar la medición de la tensión de alimentación del circuito y medir la transferencia diréctamente. El lock in implementado corresponde a la figura \ref{fig:nuestro_lockin}
+
+Ya que lo que interesa medir en nuestro circuito es transferencia, resulta útil normalizar los valores medidos. Normalizando se independiza la medición de la tensión de alimentación del circuito y se mide transferencia diréctamente. El lock in implementado corresponde a la figura \ref{fig:nuestro_lockin}
 
 \begin{figure}[H]
 	\centering
@@ -179,7 +185,7 @@ de impedancias reales.\\
 
 Se utilizaron dos generadores de señal RIGOL DG4102 
 para poder generar la señal de referencia y el ruido.
-Para sumar éstas dos señales se tuvo que "flotar"[1] la 
+Para sumar éstas dos señales se tuvo que "flotar" la 
 tierra de uno de los generadores dado que éstos no poseen 
 tierra propia, sino que utilizan la de la red eléctrica.\\
 
@@ -220,7 +226,7 @@ el valor $RL$ = (460±20)Ω, $C$ = (0.67±0.0.07)µF\\
 Se determinó que la frecuencia máxima de muestreo es 
 de aproximadamente 
 500Hz, con una frecuencia máxima medible de 250Hz, 
-según el teorema de muestreo de Nyquist[2].\\
+según el teorema de muestreo de Nyquist. \cite{haykin_4}\\
 
 Se midió el valor de $RL$ en función 
 de la relación señal a ruido en la entrada para tres 
@@ -311,15 +317,8 @@ Se concluye que la mínima SNR de entrada para el
 correcto funcionamiento del lock in implementado es de 
 aproximadamente unos '-6dB por ejemplo'.
 
-\section{Referencias}
-[1] Principles of lock-in detection
-and the state of the art. Zurich Instruments (2016).\\
-
-[2] Señales y Sistemas. Hayking. Capítulo 4. (muestreo)\\
-
-[3] Señales y Sistemas. Hayking. Capítulo 8. (filtro FIR)
-\bibliography{Antenas}
-\bibliographystyle{ieeetr}
+\bibliography{LockIn}
+\bibliographystyle{plain}
 
 \end{multicols}
 \newpage
