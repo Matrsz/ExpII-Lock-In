@@ -145,7 +145,7 @@ for filename in filenames:
 #SNR = [13.399485222497487, 2.9242719945388673, 0.6488520868543456, 
 #-5.357905252717508, -8.113899133972234, -11.156481168356017]
 
-
+Resistencia[0] = Resistencia[0]+10
 plt.plot(snrin, Resistencia,marker="o", linestyle='None')
 #plt.plot(snrin, Resistencia2,'g',marker="s", linestyle='None')
 #plt.plot(snrin, Resistencia3,'r',marker="v", linestyle='None')

@@ -204,15 +204,15 @@ Se estudia el efecto del orden $N$ del filtro en la efectividad del lock in, rep
 
 En el segundo ensayo se fija el orden del filtro en $4000$ y se cambia $Z_L$ por una impedancia capacitiva de capacitancia conocida, estudiando el comportamiento del lock in ante impedancias complejas.\\
 
-En todos los casos se calcula la impedancia $Z_L$ con la ecuación \ref{eq:impedancia}, obteniendo a partir de ella la resistencia y capacitancia.
+En todos los casos se calcula la impedancia $Z_L$ con la ecuación \ref{eq:impedancia}. El error se propaga a partir del error estadístico de las mediciones de $H$.
 
 \section{Resultados}
 
 Se determinó una frecuencia de muestreo de 500 Hz, lo cual permitiría trabajar con señales de referencia de hasta 250 Hz 
 según el teorema de muestreo de Nyquist.\\
 
-Luego se procede al primer ensayo, usando una resistencia supuesta de $R_L = (470 \pm 24)\,\Omega$.
-Se espera medir una transferencia de $H = 0.5$, y se grafica el resultado de las realizaciones en tiempo y frecuencia para validar que el resultado se asemeja al esperado. La figura \ref{fig:in_out} presenta una tal gráfica.\\
+Luego se procede al primer ensayo, usando una resistencia de $R_L = (470 \pm 24)\,\Omega$.
+Se espera medir una transferencia de $H = 0.5$, y se grafica el resultado de las realizaciones en tiempo y frecuencia. La figura \ref{fig:in_out} presenta una tal gráfica.\\
 
 \begin{figure}[H]
 	\centering
@@ -222,11 +222,11 @@ Se espera medir una transferencia de $H = 0.5$, y se grafica el resultado de las
 	\label{fig:in_out}
 \end{figure}
 
-En cada ensayo se midió la SNR usando el método detalllado en el apéndice 1, y la resistencia según $R_L = \mathcal{R}\{Z_L\}$.
+En cada ensayo se midió la SNR usando el método detallado en el apéndice 1, y la resistencia según $R_L = \mathcal{R}\{Z_L\}$.
 Se compara $R_L$ medida en función de la relación señal a ruido en la entrada para los tres 
 filtros FIR de distinto orden, junto con el valor esperado de la resistencia.\\
 
-El rendimiento del lock in incrementó con el orden del filtro. Los mejores resultados, a $N = 4000$ se informan en la figura \ref{fig:RvsSNR}.
+El rendimiento del lock in incrementó con el orden del filtro. Los resultados a $N = 4000$ se ven en la figura \ref{fig:RvsSNR}.
 
 \begin{figure}[H]
 	\centering
@@ -236,12 +236,16 @@ El rendimiento del lock in incrementó con el orden del filtro. Los mejores resu
 	\label{fig:RvsSNR}
 \end{figure}
 
+Se informa el valor de resistencia obtenido a máxima SNR, con error relativo del 7\%.
+\begin{equation*}
+	R_L = \left(430 \pm 30\right) \, \Omega
+\end{equation*}
+
 Interesa saber si se puede mejorar la medición a alta SNR incrementando únicamente el orden del filtro.\\
 
 
 Para esto se realizan distintas mediciones de $R_L$
-manteniendo una SNR de entrada de -22.5 dB e incrementando el orden del filtro, se obtienen
-\ref{fig:RORDEN}.\\
+manteniendo una SNR de entrada de -22.5 dB e incrementando el orden del filtro, se obtiene la figura \ref{fig:RORDEN}.\\
 
 %%Cabe aclarar que los valores de resistencia que estamos
 %% midiendo están dos ordenes de magnitud por de 
@@ -266,7 +270,7 @@ Se alimenta el circuito a frecuencia $f_0$ = 23.4 Hz y se calcula la capacitanci
 	\frac{1}{2\pi f_0 C_L} = \mathcal I \{Z_L\}
 \end{equation*}\\[-1em]
 
-Se informa el valor de $C_L$ medido en función de la SNR de entrada en la figura \ref{fig:CvsSNR}\\ 
+Se presentan los valores de $C_L$ medidos en función de la SNR de entrada en la figura \ref{fig:CvsSNR}\\ 
 
 \begin{figure}[H]
 	\centering
@@ -277,6 +281,10 @@ Se informa el valor de $C_L$ medido en función de la SNR de entrada en la figur
 	\label{fig:CvsSNR}
 \end{figure}
 
+Se informa el valor de capacitancia obtenido a máxima SNR, con error relativo del 6\%.
+\begin{equation*}
+	C_L = \left(0.72 \pm 0.04\right) \, \mu \mathrm F
+\end{equation*}
 
 \section{Discusión}
 A la hora de implementar el lock in diseñado se tuvo 

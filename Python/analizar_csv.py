@@ -1,18 +1,16 @@
 import numpy as np
-from uncertainties import ufloat
+import uncertainties as uc
+import uncertainties.umath as um
 import csv
 import matplotlib.pyplot as plt
 
-filename = 'sim_out_1V4000.csv'
+#filename = 'Csim_out_4V.csv'
+filename = 'sim_out_4V4000.csv'
+
 data = np.genfromtxt(filename, delimiter=' ')
 
 t, v, R, P = data[:,0], data[:, 1], data[:, 2], data[:, 3]
 
-R_m = ufloat(np.mean(R), np.std(R))
-P_m = ufloat(np.mean(P), np.std(P))
-
-print("R = ", R_m)
-print("P = ", P_m)
 
 xlims = [24, 25]
 plt.subplot(1, 2, 1)
@@ -66,13 +64,34 @@ for ax in axs:
     for ay in ax:
         ay.grid()
 plt.tight_layout()
-plt.show()
+#plt.show()
 
 
+R = uc.ufloat(np.mean(R), np.std(R))
+P = uc.ufloat(np.mean(P), np.std(P))
 
+H_re = R*um.cos(P*np.pi)
+H_im = R*um.sin(P*np.pi)
+
+R_s = uc.ufloat(470, 23.5)
+
+a = H_re
+b = H_im
+c = 1-H_re
+d = -H_im
+
+R = (a*c+b*d)/(c**2+d**2) * R_s 
+X = (b*c-a*d)/(c**2+d**2) * R_s
+
+C = 1/(2*np.pi*23.405138*X)*1e6
+
+print(H_re, " + j", H_im)
+
+print(R)
+print(C)
 #H = R_m*np.cos(P_m) + 1j*R_m*np.sin(P_m)
-H = np.mean(R)*np.cos(np.mean(P)*np.pi) + 1j*np.mean(R)*np.sin(np.mean(P)*np.pi)
-Z = (H*10000)/(1-H)
-print("Z = ", Z)
-print("Resistencia:",np.real(Z),"\nCapacitancia:",-1/(2*np.pi*23.405138*np.imag(Z)))
-print("H:",H)
+#H = np.mean(R)*np.cos(np.mean(P)*np.pi) + 1j*np.mean(R)*np.sin(np.mean(P)*np.pi)
+#Z = (H*10000)/(1-H)
+#print("Z = ", Z)
+#print("Resistencia:",np.real(Z),"\nCapacitancia:",-1/(2*np.pi*23.405138*np.imag(Z)))
+#print("H:",H)j*R*
