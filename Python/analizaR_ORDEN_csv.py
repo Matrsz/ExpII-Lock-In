@@ -93,8 +93,13 @@ SNR.append(0.2/4)
 
 N =[1000,2000,4000,8000,16000]
 Resistencia = [Resistencia, Resistencia2, Resistencia3, Resistencia4, Resistencia5]
-plt.semilogx(N,Resistencia,'b',marker="p")
-plt.xlabel("log(N)")
-plt.ylabel("RESISTENCIA[Ω]")
+plt.plot(N,Resistencia, marker="p")
+plt.axhline(y=470-23.5, xmin=0, xmax=1,color = 'k',linestyle = ':')
+plt.axhline(y=470, xmin=0, xmax=1,color = 'k',linestyle = '--')
+plt.axhline(y=470+23.5, xmin=0, xmax=1,color = 'k',linestyle = ':')
+plt.xlabel("N")
+plt.title("Resistencia Medida a SNR = -22.5 dB")
+plt.ylabel("RESISTENCIA [Ω]")
 plt.grid()
+plt.tight_layout()
 plt.show()

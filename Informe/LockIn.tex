@@ -208,14 +208,11 @@ En todos los casos se calcula la impedancia $Z_L$ con la ecuación \ref{eq:imped
 
 \section{Resultados}
 
-Falta analizar que puntos usar de las gráficas y reportar
-el valor $RL$ = (460±20)Ω, $C$ = (0.67±0.0.07)µF\\
-
 Se determinó una frecuencia de muestreo de 500 Hz, lo cual permitiría trabajar con señales de referencia de hasta 250 Hz 
 según el teorema de muestreo de Nyquist.\\
 
 Luego se procede al primer ensayo, usando una resistencia supuesta de $R_L = (470 \pm 24)\,\Omega$.
-Se espera medir una transferencia de $H = 0.5$, y se grafica el resultado de las realizaciones en tiempo y frecuencia para validar que el resultado se asemeja al esperado.\\
+Se espera medir una transferencia de $H = 0.5$, y se grafica el resultado de las realizaciones en tiempo y frecuencia para validar que el resultado se asemeja al esperado. La figura \ref{fig:in_out} presenta una tal gráfica.\\
 
 \begin{figure}[H]
 	\centering
@@ -225,65 +222,58 @@ Se espera medir una transferencia de $H = 0.5$, y se grafica el resultado de las
 	\label{fig:in_out}
 \end{figure}
 
-En cada ensayo se midió la SNR usando el método detalllado en el apéndice 1, y la resistencia $R_L = \mathcal{R}[Z_L]$.
-Se grafica $R_L$ en función de la relación señal a ruido en la entrada para tres 
-filtros FIR de distinto orden.
-Se puede apreciar que el filto óptimo es el de mayor 
-orden, dado que se utilizan mayor cantidad de 
-mediciones para generar las señales medidas.
+En cada ensayo se midió la SNR usando el método detalllado en el apéndice 1, y la resistencia según $R_L = \mathcal{R}\{Z_L\}$.
+Se compara $R_L$ medida en función de la relación señal a ruido en la entrada para los tres 
+filtros FIR de distinto orden, junto con el valor esperado de la resistencia.\\
+
+El rendimiento del lock in incrementó con el orden del filtro. Los mejores resultados, a $N = 4000$ se informan en la figura \ref{fig:RvsSNR}.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/resistencia4000.eps}
-	\caption{Resistencia de carga $RL$ obtenida con 
-	el lock in en función
-	de la relación señal ruido. Se obtuvo 
-	$RL$ = (460±20)Ω.}
+	\caption{Resistencia de carga $R_L$ medida con 
+	el lock in en función de la SNR decreciente de entrada. La gráfica indica que la medición adquirida es la esperada para SNR $\ge$ -5 dB.}
 	\label{fig:RvsSNR}
 \end{figure}
 
-Para comprobar que el límite de funcionamiento 
-del lock in no está limitado por el orden del 
-filtro elegido sino por la SNR a la entrada
-se realizaron distintas mediciones 
-sobre el valor $RL$(dada la simpleza del circuito) 
-para un valor de SNR a la entrada de -22.5dB para 
-distintos filtros como se explaya en la figura 
-\ref{fig:RORDEN}. Se aprecia un valor mas acercado 
-al tabulado cuando se aumenta el orden del filtro, sin 
-embargo está lejos de entrar en la cota del error 
-tabulado, y ésto asegura que el limitante en éste 
-lock in es el ruido a la entrada.\\
+Interesa saber si se puede mejorar la medición a alta SNR incrementando únicamente el orden del filtro.\\
 
-Cabe aclarar que los valores de resistencia que estamos
- midiendo están dos ordenes de magnitud por de 
- bajo de la impedancias de entrada del adc, y al estar en 
-una conexión en paralelo predomina el valor de la resistencia 
-que deseamos obtener.\\
+
+Para esto se realizan distintas mediciones de $R_L$
+manteniendo una SNR de entrada de -22.5 dB e incrementando el orden del filtro, se obtienen
+\ref{fig:RORDEN}.\\
+
+%%Cabe aclarar que los valores de resistencia que estamos
+%% midiendo están dos ordenes de magnitud por de 
+%% bajo de la impedancias de entrada del adc, y al estar en 
+%%una conexión en paralelo predomina el valor de la resistencia 
+%%que deseamos obtener.\\
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{Images/RORDEN.png}
-	\caption{Resistencia de carga $RL$ obtenida con 
-	el lock in en función
-	del orden del filtro empleado para  
-	una relación señal ruido de -22.5dB}
+	\includegraphics[width=\linewidth]{Images/R_orden.eps}
+	\caption{Resistencia de carga $R_L$ obtenida con 
+	el lock in respecto al valor esperado en función
+	del orden del filtro para  
+	una relación señal ruido de -22.5 dB.}
 	\label{fig:RORDEN}
 \end{figure}
 
-Por último se armó el circutio de la figura 
-\ref{fig:CvsSNR} .Con ésto 
-se midió el valor de la capacidad $CL$ para poder 
-comprobar el funcionamiento del lock in en 
-impedancias complejas.\\ 
+Por último se estudia el comportamiento del lock in ante impedancia compleja eligiendo $Z_L$ capacitiva, usando un capacitor conocido de $C_L = (0.68 \pm 0.07) \, \mu \mathrm F$.\\
+
+Se alimenta el circuito a frecuencia $f_0$ = 23.4 Hz y se calcula la capacitancia a partir de
+\begin{equation*}
+	\frac{1}{2\pi f_0 C_L} = \mathcal I \{Z_L\}
+\end{equation*}\\[-1em]
+
+Se informa el valor de $C_L$ medido en función de la SNR de entrada en la figura \ref{fig:CvsSNR}\\ 
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/capacitor4000.eps}
-	\caption{Capacidad de carga $C$ obtenida con 
-	el lock in en función
-	de la relación señal ruido. Se obtuvo 
-	$C$ = (0.67±0.0.07)µF.}
+	\caption{Capacidad de carga $C_L$ medida con 
+	el lock in en función de la SNR decreciente de entrada.
+	La medición adquirida es la esperada para SNR $\ge$ -15 dB.}
 	\label{fig:CvsSNR}
 \end{figure}
 
