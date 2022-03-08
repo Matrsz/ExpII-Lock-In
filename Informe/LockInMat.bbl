@@ -1,0 +1,21 @@
+\begin{thebibliography}{1}
+
+\bibitem{mcculw}
+Measurement Computing.
+\newblock Universal library help, Aug 2020.
+
+\bibitem{haykin_8}
+Simon Haykin.
+\newblock {\em Signals and Systems}, chapter 8.9.
+\newblock John Wiley, 2 edition, 2003.
+
+\bibitem{haykin_4}
+Simon Haykin.
+\newblock {\em Signals and Systems}, chapter 4.6.
+\newblock John Wiley, 2 edition, 2003.
+
+\bibitem{zurich}
+Zurich Instruments.
+\newblock Principles of lock-in detection and the state of the art, Nov 2016.
+
+\end{thebibliography}

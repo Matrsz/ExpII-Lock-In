@@ -114,28 +114,13 @@ for filename in filenames:
     snrin.append(analizar_snrs(filename, f, False)[0])
 
 snrin[4] = snrin[4] - 3
-Resistencia2 = []
-snrin2 = []
-filenames = ['sim_out_4V2000.csv', 'sim_out_1V2000.csv', 'sim_out_0.8V2000.csv', 'sim_out_0.6V2000.csv', 'sim_out_0.4V2000.csv', 'sim_out_0.2V2000.csv']
 
-for filename in filenames:
-    Resistencia2.append(analizar_cap(filename))
-    #snrin2.append(analizar_snrs(filename, f, False)[0])
-
-
-Resistencia3 = []
-snrin3 = []
-filenames = ['sim_out_4V1000.csv', 'sim_out_1V1000.csv', 'sim_out_0.8V1000.csv', 'sim_out_0.6V1000.csv', 'sim_out_0.4V1000.csv', 'sim_out_0.2V1000.csv']
-
-for filename in filenames:
-    Resistencia3.append(analizar_cap(filename))
-    #snrin3.append(analizar_snrs(filename, f, False)[0])
 
 #SNR = []
 #
 #SNR.append(1)
 #SNR.append(1/4)
-#SNR.append(0.8/4)
+#SNR.append(0.8/4)R(t) = \sqrt{x^2(t)+y^2(t)} \qquad \Phi = \arctantwo\left(x(t), \, y(t)\right)
 #SNR.append(0.6/4)
 #SNR.append(0.4/4)
 #SNR.append(0.2/4)
@@ -145,11 +130,9 @@ for filename in filenames:
 #-5.357905252717508, -8.113899133972234, -11.156481168356017]
 
 
-plt.plot(snrin, Resistencia,'b',marker="o")
-plt.plot(snrin, Resistencia2,'g',marker="v")
-plt.plot(snrin, Resistencia3,'y',marker="s")
-plt.axhline(y=470-23.5, xmin=0, xmax=1,color = 'r',linestyle = '--')
-plt.axhline(y=470+23.5, xmin=0, xmax=1,color = 'r',linestyle = '--')
+plt.plot(snrin, Resistencia,marker="o", linestyle='none')
+plt.axhline(y=470-23.5, xmin=0, xmax=1,color = 'k',linestyle = '--')
+plt.axhline(y=470+23.5, xmin=0, xmax=1,color = 'k',linestyle = '--')
 plt.legend(['N = 4000', 'N = 2000', 'N = 1000'])
 plt.xlabel("SNR[dB]")
 plt.ylabel("RESISTENCIA[Ω]")

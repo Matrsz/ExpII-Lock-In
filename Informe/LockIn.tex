@@ -22,6 +22,8 @@
 \renewcommand\appendixpagename{Apéndices}
 \renewcommand\appendixname{Apéndice}
 
+\DeclareMathOperator{\arctantwo}{arctan2}
+
 \titleformat{\section}{\Large\bfseries}{}{0em}{}[]
 \titleformat{\subsection}{\large\bfseries}{}{0em}{}[]
 \titleformat{\subsubsection}{\bfseries}{}{0em}{}[]
@@ -54,17 +56,32 @@
 \pagestyle{fancy}
 
 \hrule
-\begin{multicols}{2}
 \normalsize
 \section{Resumen}
+Se diseño y desarrollo un amplificador lock in 
+mediante sofware en lenguaje python. 
+Se utilizaron dos generadores de onda, uno para originar 
+la señal de referencia y otro para agregar ruido. 
+El funcionamiento del mismo se evaluó mediante 
+mediciones de impedancias conocidas, en donde el ruido 
+fue ordenes de magnitud mayor a la magnitud de la señal 
+de interés. Se analizaron los
+resultados obtenidos para distintas relaciones 
+señal-ruido, resultando los valores $RL$ = (460±20)Ω con 
+incerteza relativa de 4,3\% y
+$C$ = (0.67±0.0.07)µF con incerteza relativa de 10.4\% 
+,valores dentro de la cota del error tabulado para 
+SNR menores a '-6dB (VER)'.
 
+
+\begin{multicols}{2}
 \section{Introducción}
 
 Un amplificador lock in es un dispositvo electrónico capaz de extraer la fase y amplitud de una señal de banda angosta medida en un ambiente ruidoso.\\
 
 El funcionamiento del lock in equiere información de la dependencia temporal de la señal de interés, que es aportada por una señal de referencia. Según la implementación, la señal de referencia puede ser inyectada al lock in de una fuente externa o generada internamente.\\ 
 
-El lock in recupera la señal de interés multiplicando a esta por la referencia en fase y cuadratura, y aplicando un filtro pasa bajo al producto de señales. Este proceso es llamado \textit{demodulación coherente}.\\
+El lock in recupera la señal de interés multiplicando a esta por la referencia en fase y cuadratura, y aplicando un filtro pasa bajo al producto de señales. Este proceso es llamado \textit{demodulación coherente}. \cite{zurich}\\
 
 \begin{figure}[H]
 	\centering
@@ -81,10 +98,12 @@ La figura \ref{fig:lockin} presenta un circuito lock in típico. El bloque trans
 
 Donde la amplitud y fase se obtienen de las ecuaciones
 
-\begin{equation*}
-	R(t) = \sqrt{x^2(t)+y^2(t)} \qquad \qquad \Phi(t) = \arctan\frac{y(t)}{x(t)}
-\end{equation*}\\
-
+\begin{equation}\label{eq:ampfase}
+	\begin{aligned}
+		R(t) &= \sqrt{x^2(t)+y^2(t)}\\[0.5em]
+		\Phi(t) &= \arctantwo\left[x(t), \, y(t)\right]
+	\end{aligned}
+\end{equation}\\[-1em]
 
 Para comprender el comportamiento esperando del demodulador coherente resulta útil visualizar las señales involucradas en el dominio de la frecuencia, análisis que se realiza en la figura \ref{fig:sigs_fourier}.
 
@@ -103,49 +122,53 @@ La aplicación del amplificador lock in correspondiente a la práctica realizada
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{Images/transferencia.eps}
+	\includegraphics[width=0.7\linewidth]{Images/transferencia.eps}
 	\caption{Circuito a medir, $R_S$ es una resistencia de valor conocido, y $Z_L$ una impedancia supuesta incógnita.}
 	\label{fig:transferencia}
 \end{figure}
 
-En estas condiciones, se mide 
-\begin{equation}
-	H = \frac{v(t)}{r(t)} = \frac{Z}{R + Z} \quad \longrightarrow \quad Z =  \frac{HR}{1-H}	
-\end{equation}
+\begin{equation}\label{eq:impedancia}
+	H = \frac{v(t)}{r(t)} = \frac{Z_L}{R_S + Z_L} \quad \longrightarrow \quad Z_L =  \frac{H}{1-H}R_S	
+\end{equation}\\[-1em]
 
 La relación $v(t) = H r(t)$ con $H \in \mathbb C$ implica que el ancho de banda de la señal a medir puede considerarse arbitrariamente chico.\\
 
-El filtro elegido fue un FIR digital por su simplicidad de implemntación. Aplicar el filtro de orden N se reduce a un único producto interno vectorial
+El filtro elegido fue un FIR por sus ventajas en implemntación y diseño respecto al IIR.\cite{haykin_8}
+\begin{itemize}
+	\item Al no tener polos en su función de transferencia, un FIR es siempre estable.
+	\item La respuesta es de fase constante lo, cual permite conocer su retardo de grupo $\tau$ según la ecuación
+	\begin{equation}\label{eq:tau}
+		\tau = \frac{N-1}{2f_s}
+	\end{equation}
+	\item La aplicación de un FIR de respuesta al impulso $h$ a una señal $x$ se realiza en una única operación
+	\begin{equation*}\label{eq:fir}
+		y_i = \sum_{j=0}^N h_jx_{i-j}= 
+		\begin{bmatrix}
+			x_i & \cdots & x_{i-N}
+		\end{bmatrix}
+		\begin{bmatrix}
+			h_0 \\ \vdots \\ h_N	
+		\end{bmatrix}
+	\end{equation*}
+\end{itemize} 
 
-\begin{equation}\label{eq:fir}
-	y_i = \sum_{j=0}^N h_jx_{i-j}= 
-	\begin{bmatrix}
-		x_i & \cdots & x_{i-N}
-	\end{bmatrix}
-	\begin{bmatrix}
-		h_0 \\ \vdots \\ h_N	
-	\end{bmatrix}
-\end{equation}\\[-1em]
 
-El filtro FIR es generado con la función \texttt{firwin} perteneciente a \texttt{scipy.signal} que garantiza fase constante, lo que permite fácilmente conocer su retardo de grupo a frecuencia de muestreo $f_s$
+En función de $\tau$ se decide a partir de que instante registrar valores, tal de medir únicamente en régimen estacionario. Se elije la convención de que el régimen estacionario empieza a $t \ge 5\tau$.\\
 
-\begin{equation}\label{eq:tau}
-	\tau = \frac{N-1}{2f_s}
-\end{equation}\\[-1em]
 
-Ya que lo que interesa medir en nuestro circuito es transferencia, resulta útil normalizar los valores a fin de independizar la medición de la tensión de alimentación del circuito y medir la transferencia diréctamente. El lock in implementado corresponde a la figura \ref{fig:nuestro_lockin}
+Ya que lo que interesa medir en nuestro circuito es transferencia, resulta útil normalizar los valores medidos respecto al valor pico de la referencia, implementando el lock in correspondiente a la figura \ref{fig:nuestro_lockin}.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/nuestro_lockin.eps}
-	\caption{Lock In implmentado para medición de impedancias. El módulo $\times 2$ aplicado a la referencia contrarresta un efecto de la demodulación visto en la figura \ref{fig:sigs_fourier} donde la mitad de la amplitud de la señal de interés es transportada a alta frecuencia y filtrada.}
+	\caption{Lock In implmentado para medición de impedancias, usando señales normalizadas.}
 	\label{fig:nuestro_lockin}
 \end{figure}
 
-\section{Método Experimental}
+De esta forma, se independiza la medición de la tensión de alimentación, midiendo directamente la transferencia del circuito. 
+Esta se presenta en el formato módulo y fase dado por la ecuación \ref{eq:ampfase}.
 
-En primer lugar se midió la frecuencia máxima de 
-muestreo que permite el dispositivo de medición, esta es necesaria para diseñar los filtros digitales y para conocer la máxima frecuencia de señal que se puede medir.\\
+\section{Método Experimental}
 
 \begin{figure}[H]
 	\centering
@@ -154,61 +177,56 @@ muestreo que permite el dispositivo de medición, esta es necesaria para diseña
 	\label{fig:circuito}
 \end{figure}
 
-
-Luego se ensambló el circuito de la figura 
-\ref{fig:circuito}, en donde $ZL$ era de carácter
- puramente resistivo, y se pudo obtener 
-el valor de la resistencia de carga $RL = ZL$ para 
-comprobar el funcionamiento del lock in en el caso 
-de impedancias reales.\\ 
-
-Se utilizaron dos generadores de señal RIGOL DG4102 
+Se ensambla el circuito de la figura \ref{fig:circuito}, eligiendo $R_S = 470 \, \Omega$. 
+Se utilizan dos generadores de señal RIGOL DG4102 
 para poder generar la señal de referencia y el ruido.
-Para sumar éstas dos señales se tuvo que "flotar"[1] la 
-tierra de uno de los generadores dado que éstos no poseen 
-tierra propia, sino que utilizan la de la red eléctrica.\\
+Para sumar el ruido a la entrada es necesario flotar la 
+tierra del generador de señal, de lo contrario usará la tierra de la red eléctrica.\\
 
-Para la realización del lock in se implementó un 
-script en python como se puede ver en el apéndice.
-En el código se importó la librería del dispositivo 
-de medición, el 
-conversor analógico dígital USB-1408FS de la línea 
-MEASUREMENT COMPUTING, para poder 
-calibrarlo y realizar las mediciones.\\
+Para la adquisición de datos del conversor analógico dígital USB-1408FS de
+Measurement Computing se importa la librería \texttt{mcculw}\cite{mcculw}, y el lock in digital se implementa en Python.\\
 
-Se implementaron 
-las etapas de la figura \ref{fig:nuestro_lockin},
- en donde se optó por utilizar filtros FIR dada 
- su versatilidad y sencillez de implementación.\\
+Armado el circuito se mide la máxima tasa de muestreo $f_s$, la cual está condicionada por la comunicación serie entre Python y los canales del ADC. 
+Se mide temporizando y promediando el período de muestreo a máxima frecuencia.\\
 
-El programa toma la señal $v(t)$
-y la normaliza utilizando su máximo valor de amplitud,
- siendo ésta la tensión de referencia. Además se mide 
- la señal $r(t)$ y se le aumenta la amplitud en un factor
- de 2 por el desarrollo que se necesita [Apéndice].
-Se genera la señal $p(t)$ mediante la multiplicación de 
-las dos señales tomadas.
-Luego se genera la señal $q(t)$ desfasando 90◦
-la señal 
-mediante la transformada de Hilbert.
-Por último se aplican filtros pasa bajos,
- obteniendo respectivamente las salidas $x(t)$ e $y(t)$,
-  necesarias para obtener los
-valores de amplitud y fase de la señal $v(t)$.
+La tasa de muestreo se usa para diseñar los FIR digitales usando \texttt{scipy.signal.firwin}, para calcular $\tau$ a partir de la ecuación \ref{eq:tau}, y para conocer la máxima frecuencia de señal que se puede medir según el teorema del muestreo Nyquist\cite{haykin_4}.\\
 
+
+Conocido $\tau$ se registran unicamente los valores estacionarios de la salida, usando la convención de régimen estacionario en $t \ge 5\tau$.\\
+
+En cada ensayo se mantiene un nivel de ruido constante $N_0$ a 4 V, y se varía la intensidad de la señal de alimentación $V_p$ a 4 V, 1 V, 0.8 V, 0.6 V, 0.4 V, 0.2 V, disminuyendo de esta forma la relación señal ruido.\\
+
+
+En el primer ensayo se elige $Z_L$ puramente resistiva, optando por $Z_L = R_L$, de esta forma se
+estudia el funcionamiento del lock in ante impedancias reales.\\ 
+
+Se estudia el efecto del orden $N$ del filtro en la efectividad del lock in, repitiendo el experimento para órdenes $N=4000$, $N=2000$, $N=1000$.\\
+
+En el segundo ensayo se fija el orden del filtro en $4000$ y se cambia $Z_L$ por una impedancia capacitiva de capacitancia conocida, estudiando el comportamiento del lock in ante impedancias complejas.\\
+
+En todos los casos se calcula la impedancia $Z_L$ con la ecuación \ref{eq:impedancia}, obteniendo a partir de ella la resistencia y capacitancia.
 
 \section{Resultados}
 
 Falta analizar que puntos usar de las gráficas y reportar
-el valor RL = ... +/- ..., CL = ... +/- ...\\
+el valor $RL$ = (460±20)Ω, $C$ = (0.67±0.0.07)µF\\
 
-Se determinó que la frecuencia máxima de muestreo es 
-de aproximadamente 
-500Hz, con una frecuencia máxima medible de 250Hz, 
-según el teorema de muestreo de Nyquist[2].\\
+Se determinó una frecuencia de muestreo de 500 Hz, lo cual permitiría trabajar con señales de referencia de hasta 250 Hz 
+según el teorema de muestreo de Nyquist.\\
 
-Se midió el valor de $RL$ en función 
-de la relación señal a ruido en la entrada para tres 
+Luego se procede al primer ensayo, usando una resistencia supuesta de $R_L = (470 \pm 24)\,\Omega$.
+Se espera medir una transferencia de $H = 0.5$, y se grafica el resultado de las realizaciones en tiempo y frecuencia para validar que el resultado se asemeja al esperado.\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Images/in_out.eps}
+	\caption{Entrada al lock in normalizada $v(t)/V_P$ y salida normalizada $z(t)/V_P$, 
+	que equivale a transferencia del circuito. Esta realización corresponde a orden del filtro $N$ = 4000 y tensión de referencia a $V_P$ = 1 V.}
+	\label{fig:in_out}
+\end{figure}
+
+En cada ensayo se midió la SNR usando el método detalllado en el apéndice 1, y la resistencia $R_L = \mathcal{R}[Z_L]$.
+Se grafica $R_L$ en función de la relación señal a ruido en la entrada para tres 
 filtros FIR de distinto orden.
 Se puede apreciar que el filto óptimo es el de mayor 
 orden, dado que se utilizan mayor cantidad de 
@@ -216,8 +234,11 @@ mediciones para generar las señales medidas.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{Images/RvsSNR(segunda).png}
-	\caption{RvsSNR}
+	\includegraphics[width=\linewidth]{Images/resistencia4000.eps}
+	\caption{Resistencia de carga $RL$ obtenida con 
+	el lock in en función
+	de la relación señal ruido. Se obtuvo 
+	$RL$ = (460±20)Ω.}
 	\label{fig:RvsSNR}
 \end{figure}
 
@@ -236,14 +257,17 @@ lock in es el ruido a la entrada.\\
 
 Cabe aclarar que los valores de resistencia que estamos
  midiendo están dos ordenes de magnitud por de 
- bajo de la impedancias de entrada del dac, y al estar en 
+ bajo de la impedancias de entrada del adc, y al estar en 
 una conexión en paralelo predomina el valor de la resistencia 
 que deseamos obtener.\\
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\linewidth]{Images/RORDEN.png}
-	\caption{RORDEN}
+	\caption{Resistencia de carga $RL$ obtenida con 
+	el lock in en función
+	del orden del filtro empleado para  
+	una relación señal ruido de -22.5dB}
 	\label{fig:RORDEN}
 \end{figure}
 
@@ -255,39 +279,43 @@ impedancias complejas.\\
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{Images/CvsSNR(segunda).png}
-	\caption{RvsSNR}
+	\includegraphics[width=\linewidth]{Images/capacitor4000.eps}
+	\caption{Capacidad de carga $C$ obtenida con 
+	el lock in en función
+	de la relación señal ruido. Se obtuvo 
+	$C$ = (0.67±0.0.07)µF.}
 	\label{fig:CvsSNR}
 \end{figure}
 
 
 \section{Discusión}
-Discusión o trabajo a futuro:\\
--Frecuencia de muestreo ¿usar otro dac?\\
--Orden del filtro\\
--Pq tuvimos que flotar\\
--Hacer más mediciones en el capacitor entre -5dB y -15db, 
-porque en la resistencia llega hasta -12dB como mínimo.
-Con respecto a ésto, ¿descartamos 4 puntos en el gráfica de 
-la capacitancia?, nos quedaría sólo 1...
+A la hora de implementar el lock in diseñado se tuvo 
+la limitancia de un valor bajo en la frecuencia de 
+muestreo máxima que permitía el adc utilizado, por lo 
+que se sugiere renovar éste 
+dispositivo para poder tener un mayor 
+rango de funcionamiento.\\
+
+Se recomienda no realizar mediciones 
+en la que la frecuencia de referencia sea 
+similar a la frecuencia de la red dado que 
+ésto introduce un mayor nivel de ruido.
+
 
 \section{Conclusiones}
 
 Si bien los amplificadores lock in comerciales resuelven 
-mediciones con SNR de 1:1000, se encuentra satisfactorio 
+mediciones con SNR de 1:1000, es decir 60dB,
+ se encuentra satisfactorio 
 el rendimiento del lock in digital desarrollado, con 
 una implementación relativamente sencilla.\\
 
 Se concluye que la mínima SNR de entrada para el 
 correcto funcionamiento del lock in implementado es de 
-aproximadamente unos "-6dB por ejemplo".(VER BIEN QUE 
-CRITERIO UTILIZAR PARA DAR EL VALOR, y si 
-conviene en dB o en 1:10 por ejemplo)
+aproximadamente unos '-6dB por ejemplo'.
 
-\section{Referencias}
-
-\bibliography{Antenas}
-\bibliographystyle{ieeetr}
+\bibliography{LockIn}
+\bibliographystyle{plain}
 
 \end{multicols}
 \newpage

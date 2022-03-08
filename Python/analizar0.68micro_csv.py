@@ -62,7 +62,7 @@ C.append(1/(2*np.pi*23.405138*np.imag(Z)))
 
 ################################################
 
-filename = 'Csim_out_0.4v.csv'
+filename = 'Csim_out_0.4V.csv'
 data = np.genfromtxt(filename, delimiter=' ')
 
 t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
@@ -92,14 +92,17 @@ SNR = [-3.2493957646772498, -15.304125219585893, -17.55847698803266,
 #No puse el valor de 0.2/4 porque me da un valor negativo de capacidad(encima 9e-6)
 Cuf = [c*1000000 for c in C]
 print("C = ",Cuf)
-print("SNR = ",SNR)
-plt.plot(SNR,Cuf,'b',marker="o")
-plt.axhline(y=0.68-0.68*0.1, xmin=0, xmax=1,color = 'r',linestyle = '--')
-plt.axhline(y=0.68+0.68*0.1, xmin=0, xmax=1,color = 'r',linestyle = '--')
-plt.xlabel("SNR[dB]")
-plt.ylabel("CAPACIDAD[μF]")
-plt.legend(['N = 4000'])
+print("SNR = ", SNR)
+plt.plot(SNR,Cuf,marker="o", linestyle='None')
+plt.axhline(y=0.68-0.68*0.1, xmin=0, xmax=1,color = 'k',linestyle = ':')
+plt.axhline(y=0.68, xmin=0, xmax=1,color = 'k',linestyle = '--')
+plt.axhline(y=0.68+0.68*0.1, xmin=0, xmax=1,color = 'k',linestyle = ':')
+plt.xlabel("SNR [dB]")
+plt.gca().invert_xaxis()
+plt.title("Impedancia Capacitiva, N = 4000")
+plt.ylabel("CAPACIDAD [μF]")
 plt.grid()
+plt.tight_layout()
 plt.show()
 
 #REPORTAR C:

@@ -3,7 +3,7 @@ from uncertainties import ufloat
 import csv
 import matplotlib.pyplot as plt
 
-filename = 'sim_out_pocoruido.csv'
+filename = 'sim_out_1V4000.csv'
 data = np.genfromtxt(filename, delimiter=' ')
 
 t, v, R, P = data[:,0], data[:, 1], data[:, 2], data[:, 3]
@@ -14,14 +14,23 @@ P_m = ufloat(np.mean(P), np.std(P))
 print("R = ", R_m)
 print("P = ", P_m)
 
-fig, axs = plt.subplots(2,1)
-axs[0].plot(t, R, "b")
-axs[0].set_title("Amplitud")
-axs[0].set_ylim([0, np.max(R)*1.2])
-axs[1].plot(t, P, "r")
-axs[1].set_ylim([-1, 1])
-axs[1].set_title("Fase")
-plt.show()
+xlims = [24, 25]
+plt.subplot(1, 2, 1)
+plt.plot(t, v)
+plt.title("Entrada Lockin")
+plt.xlim(xlims)
+plt.subplot(2, 2, 2)
+plt.plot(t, R, "b")
+plt.xlim(xlims)
+plt.title("Amplitud")
+plt.ylim([0, np.max(R)*1.2])
+plt.subplot(2,2,4)
+plt.plot(t, P*np.pi, "r")
+plt.xlim(xlims)
+plt.ylim([-1, 1])
+plt.title("Fase")
+plt.tight_layout()
+#plt.show()
 
 def fourierizar(s):
     S = np.fft.fft(s)
@@ -32,19 +41,33 @@ fig, axs = plt.subplots(2,2)
 Ts = (t[-1]-t[0])/len(t)
 f = np.fft.fftfreq(len(t), Ts)
 lims = [np.min(v)*1.1, np.max(v)*1.1]
-axs[0,0].plot(t, v, "b")
-axs[0,0].set_title("Entrada Lockin")
+axs[0,0].plot(t, v)
+axs[0,0].set_title("Entrada Normalizada")
+axs[0,0].set_xlim(xlims)
 axs[0,0].set_ylim(lims)
-axs[0,1].plot(t, R, "r")
+axs[0,1].plot(t, R)
 axs[0,1].set_ylim(lims)
-axs[0,1].set_title("Salida Lockin")
-axs[1,0].plot(f, fourierizar(v), "b")
-axs[1,0].set_title("Entrada Lockin")
+axs[0,1].set_title("Salida Normalizada")
+axs[0,1].set_xlim(xlims)
+axs[1,0].plot(f, fourierizar(v))
 axs[1,0].set_ylim([0, np.max(fourierizar(v))*1.1])
-axs[1,1].plot(f, fourierizar(R), "r")
+axs[1,1].plot(f, fourierizar(R))
 axs[1,1].set_ylim([0, np.max(fourierizar(R))*1.1])
-axs[1,1].set_title("Salida Lockin")
+axs[0,0].set_xlabel("t [s]")
+axs[0,1].set_xlabel("t [s]")
+axs[0,0].set_yticks([-1, -0.5, 0, 0.5, 1])
+axs[0,1].set_yticks([-1, -0.5, 0, 0.5, 1])
+axs[1,0].set_xlabel("f [Hz]")
+axs[1,1].set_xlabel("f [Hz]")
+axs[1,0].set_xticks([-100, -50, 0, 50, 100])
+axs[1,1].set_xticks([-100, -50, 0, 50, 100])
+
+for ax in axs:
+    for ay in ax:
+        ay.grid()
+plt.tight_layout()
 plt.show()
+
 
 
 #H = R_m*np.cos(P_m) + 1j*R_m*np.sin(P_m)
