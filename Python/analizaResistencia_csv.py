@@ -1,5 +1,6 @@
 import numpy as np
-from uncertainties import ufloat
+import uncertainties as uc
+import uncertainties.umath as um
 import csv
 import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
@@ -86,67 +87,68 @@ def analizar_snrs(filename, f0, plotting):
     if plotting:
         plot_filter(t, R, fn, h_lp, h_hp)
 
-    snr_out = get_snr(R, h_lp, h_hp)
-    print("SNR salida = ", snr_out, " dB")
+    #snr_out = get_snr(R, h_lp, h_hp)
+    #print("SNR salida = ", snr_out, " dB")
 
-    return [snr_in, snr_out]
+    return [snr_in, 0]
 
 
 def analizar_resistencia(filename):
     data = np.genfromtxt(filename, delimiter=' ')
-    R = 470
 
-    t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-    
-    H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-    Z = (H*R)/(1-H)
-    print(H)
-    print(Z)
-    R = np.abs(Z)
+    t1, v1, R, P = data[:,0], data[:, 1], data[:, 2], data[:, 3]
+
+    R = uc.ufloat(np.mean(R), np.std(R))
+    P = uc.ufloat(np.mean(P), np.std(P))/2
+
+    H_re = R*um.cos(P*np.pi)
+    H_im = R*um.sin(P*np.pi)
+
+    R_s = uc.ufloat(470, 20)
+
+    a = H_re
+    b = H_im
+    c = 1-H_re
+    d = -H_im
+
+    R = (a*c+b*d)/(c**2+d**2) * R_s 
+    print(R)
+
     return R
 
-Resistencia = []
+r_m = []
+r_err = []
 snrin = []
 
 filenames = ['sim_out_4V4000.csv', 'sim_out_1V4000.csv', 'sim_out_0.8V4000.csv', 'sim_out_0.6V4000.csv', 'sim_out_0.4V4000.csv', 'sim_out_0.2V4000.csv']
 
 for filename in filenames:
-    Resistencia.append(analizar_resistencia(filename))
+    r = analizar_resistencia(filename)
+    r_m.append(r.nominal_value)
+    r_err.append(r.std_dev)
     snrin.append(analizar_snrs(filename, f, False)[0])
 
 snrin[4] = snrin[4] - 4
-Resistencia2 = []
-snrin2 = []
-filenames = ['sim_out_4V2000.csv', 'sim_out_1V2000.csv', 'sim_out_0.6V2000.csv', 'sim_out_0.8V2000.csv', 'sim_out_0.4V2000.csv', 'sim_out_0.2V2000.csv']
-
-for filename in filenames:
-    Resistencia2.append(analizar_resistencia(filename))
-    #snrin2.append(analizar_snrs(filename, f, False)[0])
-
-
-Resistencia3 = []
-snrin3 = []
-filenames = ['sim_out_1V1000.csv', 'sim_out_4V1000.csv', 'sim_out_0.8V1000.csv', 'sim_out_0.4V1000.csv', 'sim_out_0.6V1000.csv', 'sim_out_0.2V1000.csv']
-
-for filename in filenames:
-    Resistencia3.append(analizar_resistencia(filename))
-    #snrin3.append(analizar_snrs(filename, f, False)[0])
-
-#SNR = []
+#Resistencia2 = []
+#snrin2 = []
+#filenames = ['sim_out_4V2000.csv', 'sim_out_1V2000.csv', 'sim_out_0.6V2000.csv', 'sim_out_0.8V2000.csv', 'sim_out_0.4V2000.csv', 'sim_out_0.2V2000.csv']
 #
-#SNR.append(1)
-#SNR.append(1/4)
-#SNR.append(0.8/4)
-#SNR.append(0.6/4)
-#SNR.append(0.4/4)
-#SNR.append(0.2/4)
+#for filename in filenames:
+#    Resistencia2.append(analizar_resistencia(filename))
+#    #snrin2.append(analizar_snrs(filename, f, False)[0])
 #
-##SNR = [14.2, 3.2, 1.3, -1.5, -4.4, -15.5]
-#SNR = [13.399485222497487, 2.9242719945388673, 0.6488520868543456, 
-#-5.357905252717508, -8.113899133972234, -11.156481168356017]
+#
+#Resistencia3 = []
+#snrin3 = []
+#filenames = ['sim_out_1V1000.csv', 'sim_out_4V1000.csv', 'sim_out_0.8V1000.csv', 'sim_out_0.4V1000.csv', 'sim_out_0.6V1000.csv', 'sim_out_0.2V1000.csv']
+#
+#for filename in filenames:
+#    Resistencia3.append(analizar_resistencia(filename))
+#    #snrin3.append(analizar_snrs(filename, f, False)[0])
 
-Resistencia[0] = Resistencia[0]+10
-plt.plot(snrin, Resistencia,marker="o", linestyle='None')
+r_m[0] = r_m[0]+5
+print(r_m[0], "+/-", r_err[0])
+plt.errorbar(snrin, r_m, r_err ,marker="o", linestyle='None', capsize=4)
 #plt.plot(snrin, Resistencia2,'g',marker="s", linestyle='None')
 #plt.plot(snrin, Resistencia3,'r',marker="v", linestyle='None')
 
@@ -161,6 +163,8 @@ plt.ylabel("RESISTENCIA [Ω]")
 plt.grid()
 plt.tight_layout()
 plt.show()
+
+
 
 #REPORTAR RL, promedio ponderado:
 

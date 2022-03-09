@@ -5,7 +5,7 @@ import csv
 import matplotlib.pyplot as plt
 
 #filename = 'Csim_out_4V.csv'
-filename = 'sim_out_4V4000.csv'
+filename = 'sim_out_1V4000.csv'
 
 data = np.genfromtxt(filename, delimiter=' ')
 

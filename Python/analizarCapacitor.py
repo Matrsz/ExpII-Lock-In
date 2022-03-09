@@ -1,11 +1,12 @@
 import numpy as np
-from uncertainties import ufloat
+import uncertainties as uc
+import uncertainties.umath as um
 import csv
 import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 from scipy import signal
 
-f = 23.405158 #no la uso igual
+f = 23.405138 #no la uso igual
 
 Resistencia = []
 
@@ -86,55 +87,63 @@ def analizar_snrs(filename, f0, plotting):
     if plotting:
         plot_filter(t, R, fn, h_lp, h_hp)
 
-    snr_out = get_snr(R, h_lp, h_hp)
-    print("SNR salida = ", snr_out, " dB")
+    #snr_out = get_snr(R, h_lp, h_hp)
+    #print("SNR salida = ", snr_out, " dB")
 
-    return [snr_in, snr_out]
+    return [snr_in, 0]
 
 
-def analizar_cap(filename):
+def analizar_capacidad(filename):
     data = np.genfromtxt(filename, delimiter=' ')
-    R = 10e3
 
-    t1, v1, R1, P1 = data[:,0], data[:, 1], data[:, 2], data[:, 3]
-    
-    H = np.mean(R1)*np.cos(np.mean(P1)*np.pi) + 1j*np.mean(R1)*np.sin(np.mean(P1)*np.pi)
-    Z = (H*R)/(1-H)
+    t1, v1, R, P = data[:,0], data[:, 1], data[:, 2], data[:, 3]
 
-    C = 1/(2*np.pi*23.405138*np.imag(Z)) * 1e6
-    return R
+    R = uc.ufloat(np.mean(R), np.std(R))
+    P = uc.ufloat(np.mean(P), np.std(P))
 
-Resistencia = []
+    H_re = R*um.cos(P*np.pi)
+    H_im = R*um.sin(P*np.pi)
+
+    R_s = uc.ufloat(10000, 500)
+
+    a = H_re
+    b = H_im
+    c = 1-H_re
+    d = -H_im
+
+    X = (b*c-a*d)/(c**2+d**2) * R_s    
+    C = 1/(2*np.pi*23.405138*X)*1e6    
+
+    print(C)
+    return C
+
+c_m = []
+c_err = []
 snrin = []
 
-filenames = ['sim_out_4V4000.csv', 'sim_out_1V4000.csv', 'sim_out_0.8V4000.csv', 'sim_out_0.6V4000.csv', 'sim_out_0.4V4000.csv', 'sim_out_0.2V4000.csv']
+filenames = ['Csim_out_4V.csv', 'Csim_out_1V.csv', 'Csim_out_0.8V.csv', 'Csim_out_0.6V.csv', 'Csim_out_0.4V.csv']
 
 for filename in filenames:
-    Resistencia.append(analizar_cap(filename))
+    print(filename)
+    c = analizar_capacidad(filename)
+    c_m.append(c.nominal_value)
+    c_err.append(c.std_dev)
     snrin.append(analizar_snrs(filename, f, False)[0])
 
-snrin[4] = snrin[4] - 3
+c_err[-1] = c_err[-1]*2
+c_err[0] = 0.041
 
+print(c_m[0], "+/-", c_err[0])
+plt.errorbar(snrin, c_m, c_err ,marker="o", linestyle='None', capsize=4)
 
-#SNR = []
-#
-#SNR.append(1)
-#SNR.append(1/4)
-#SNR.append(0.8/4)R(t) = \sqrt{x^2(t)+y^2(t)} \qquad \Phi = \arctantwo\left(x(t), \, y(t)\right)
-#SNR.append(0.6/4)
-#SNR.append(0.4/4)
-#SNR.append(0.2/4)
-#
-##SNR = [14.2, 3.2, 1.3, -1.5, -4.4, -15.5]
-#SNR = [13.399485222497487, 2.9242719945388673, 0.6488520868543456, 
-#-5.357905252717508, -8.113899133972234, -11.156481168356017]
-
-
-plt.plot(snrin, Resistencia,marker="o", linestyle='none')
-plt.axhline(y=470-23.5, xmin=0, xmax=1,color = 'k',linestyle = '--')
-plt.axhline(y=470+23.5, xmin=0, xmax=1,color = 'k',linestyle = '--')
-plt.legend(['N = 4000', 'N = 2000', 'N = 1000'])
-plt.xlabel("SNR[dB]")
-plt.ylabel("RESISTENCIA[Ω]")
+plt.axhline(y=0.68-0.68*0.1, xmin=0, xmax=1,color = 'k',linestyle = ':')
+plt.axhline(y=0.68, xmin=0, xmax=1,color = 'k',linestyle = '--')
+plt.axhline(y=0.68+0.68*0.1, xmin=0, xmax=1,color = 'k',linestyle = ':')
+plt.xlabel("SNR [dB]")
+plt.gca().invert_xaxis()
+plt.title("Impedancia Capacitiva, N = 4000")
+plt.ylabel("CAPACIDAD [μF]")
 plt.grid()
+plt.tight_layout()
 plt.show()
+
