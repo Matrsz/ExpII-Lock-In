@@ -58,7 +58,7 @@
 \hrule
 \normalsize
 \section{Resumen}
-Se diseño y desarrollo un amplificador lock digital en lenguaje Python. 
+Se diseño y desarrollo un amplificador lock in digital en lenguaje Python. 
 El funcionamiento del mismo se evaluó mediante 
 mediciones de impedancias conocidas con ruido blanco aditivo 
 de mayor magnitud a la señal 
@@ -73,9 +73,11 @@ obteniendo mediciones con incerteza relativa de 4\% ante impedancia real y 6\% a
 
 Un amplificador lock in es un dispositvo electrónico capaz de extraer la fase y amplitud de una señal de banda angosta medida en un ambiente ruidoso.\\
 
-El funcionamiento del lock in equiere información de la dependencia temporal de la señal de interés, que es aportada por una señal de referencia. Según la implementación, la señal de referencia puede ser inyectada al lock in de una fuente externa o generada internamente.\\ 
+El funcionamiento requiere información de la dependencia temporal de la señal de interés, que es aportada por una señal de referencia. Según la implementación, la señal de referencia puede ser inyectada al lock in de una fuente externa o generada internamente.\\ 
 
-El lock in recupera la señal de interés multiplicando a esta por la referencia en fase y cuadratura, y aplicando un filtro pasa bajo al producto de señales. Este proceso es llamado \textit{demodulación coherente}. \cite{zurich}\\
+El lock in recupera la señal de interés multiplicando a ésta por la referencia en fase y cuadratura, y aplicando un filtro pasa bajo al producto de señales. Este proceso es llamado \textit{demodulación coherente}. \cite{zurich}\\
+
+La figura \ref{fig:lockin} representa el diagrama de un lock in típico. El bloque transformada de Hilbert para una referencia senoidal corresponde a un desfasaje de 90°.\\
 
 \begin{figure}[H]
 	\centering
@@ -84,13 +86,11 @@ El lock in recupera la señal de interés multiplicando a esta por la referencia
 	\label{fig:lockin}
 \end{figure}
 
-La figura \ref{fig:lockin} presenta un circuito lock in típico. El bloque transformada de Hilbert para una referencia senoidal corresponde a un desfasaje de 90°.\\
-
 La señal de salida $z(t)$ se obtiene en forma de parte real e imaginaria
 \begin{equation*}
 	z(t) = x(t) + j y(t) = R(t) e ^{j\Phi(t)}
 \end{equation*}\\[-1em]
-Pero típicamente se expresa en forma amplitud y fase donde la amplitud y fase se obtienen de las ecuaciones
+Típicamente se expresa en forma amplitud y fase donde la amplitud y fase se obtienen de las ecuaciones
 
 \begin{equation}\label{eq:ampfase}
 	\begin{aligned}
@@ -112,7 +112,7 @@ La salida $z(t)$ del demodulador coherente se puede interpretar como la entrada 
 
 \section{Implementación}
 
-La aplicación del amplificador lock in correspondiente a la práctica realizada es de medición de impedancias. Esto se realiza midiendo la transferencia de un circuito divisor de tensión con una impedancia incógnita.
+La aplicación del amplificador lock in correspondiente a la práctica realizada es la medición de impedancias. Ésto se realiza midiendo la transferencia de un circuito divisor de tensión con una impedancia incógnita.
 
 \begin{figure}[H]
 	\centering
@@ -127,7 +127,7 @@ La aplicación del amplificador lock in correspondiente a la práctica realizada
 
 La relación $v(t) = H r(t)$ con $H \in \mathbb C$ implica que el ancho de banda de la señal a medir puede considerarse arbitrariamente chico.\\
 
-El filtro elegido fue un FIR por sus ventajas en implemntación y diseño respecto al IIR.\cite{haykin_8}
+El filtro elegido fue un FIR por sus ventajas en implementación y diseño respecto al IIR.\cite{haykin_8}
 \begin{itemize}
 	\item Al no tener polos en su función de transferencia, un FIR es siempre estable.
 	\item La respuesta es de fase constante lo, cual permite conocer su retardo de grupo $\tau$ según la ecuación
@@ -158,8 +158,8 @@ Ya que lo que interesa medir en nuestro circuito es transferencia, resulta útil
 	\label{fig:nuestro_lockin}
 \end{figure}
 
-De esta forma, se independiza la medición de la tensión de alimentación, midiendo directamente la transferencia del circuito. 
-Esta se presenta en el formato módulo y fase dado por la ecuación \ref{eq:ampfase}.
+De ésta forma, se independiza la medición de la tensión de alimentación, midiendo directamente la transferencia del circuito. 
+Ésta se presenta en el formato módulo y fase dado por la ecuación \ref{eq:ampfase}.
 
 \section{Método Experimental}
 
@@ -179,7 +179,7 @@ tierra del generador de señal, de lo contrario usará la tierra de la red eléc
 Para la adquisición de datos se usa un conversor analógico dígital USB-1408FS de
 Measurement Computing, a escala de $\pm 20$ V y rango dinámico de 14 bits. El lock in digital se implementa en Python adquiriendo los datos con la librería \texttt{mcculw}.\cite{mcculw}\\
 
-Armado el circuito se mide la máxima tasa de muestreo $f_s$, la cual está condicionada por la tasa de bits en comunicación serie entre Python y del ADC.
+Armado el circuito se mide la máxima tasa de muestreo $f_s$, la cual está condicionada por la tasa de bits en comunicación serie entre Python y el ADC.
 Se mide temporizando y promediando el período de muestreo a máxima frecuencia.\\
 
 La tasa de muestreo se usa para diseñar los FIR digitales usando \texttt{scipy.signal.firwin}, para calcular $\tau$ a partir de la ecuación \ref{eq:tau}, y para conocer la máxima frecuencia de señal que se puede medir según el teorema del muestreo Nyquist.\cite{haykin_4}\\
@@ -187,7 +187,7 @@ La tasa de muestreo se usa para diseñar los FIR digitales usando \texttt{scipy.
 
 Conocido $\tau$ se registran unicamente los valores estacionarios de la salida, usando la convención de régimen estacionario en $t \ge 5\tau$.\\
 
-En cada ensayo se mantiene un nivel de ruido constante $N_0$ a 4 V, y se varía la intensidad de la señal de alimentación $V_p$ a 4 V, 1 V, 0.8 V, 0.6 V, 0.4 V, 0.2 V, disminuyendo de esta forma la relación señal ruido.\\
+En cada ensayo se mantiene un nivel de ruido constante $N_0$ a 4 V como máximo, y se varía la intensidad de la señal de alimentación $V_p$ a 4 V, 1 V, 0.8 V, 0.6 V, 0.4 V, 0.2 V, disminuyendo de ésta forma la relación señal ruido.\\
 
 
 En el primer ensayo se elige $Z_L$ puramente resistiva de valor conocido, estudiando el funcionamiento del lock in ante impedancias reales.\\ 
@@ -339,7 +339,7 @@ Esto permite aproximar $s(t)$ y $n(t)$ usando filtros muy selectivos a frecuenci
 	\label{fig:circ_snr}
 \end{figure}
 
-Una realización de este proceso en el dominio de la frecuencia ante una medición de $v(t)$ se presenta en la figura \ref{fig:snr_filtros}
+Una realización de este proceso en el dominio de la frecuencia ante una medición de $v(t)$ se presenta en la figura \ref{fig:snr_filtros}.
 
 \begin{figure}[H]
 	\centering
