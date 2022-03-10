@@ -91,6 +91,7 @@ SNR = []
 
 SNR.append(0.2/4)
 
+
 N =[1000,2000,4000,8000,16000]
 Resistencia = [Resistencia, Resistencia2, Resistencia3, Resistencia4, Resistencia5]
 plt.plot(N,Resistencia, marker="p")

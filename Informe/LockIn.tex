@@ -58,20 +58,14 @@
 \hrule
 \normalsize
 \section{Resumen}
-Se diseño y desarrollo un amplificador lock in 
-mediante sofware en lenguaje python. 
-Se utilizaron dos generadores de onda, uno para originar 
-la señal de referencia y otro para agregar ruido. 
+Se diseño y desarrollo un amplificador lock digital en lenguaje Python. 
 El funcionamiento del mismo se evaluó mediante 
-mediciones de impedancias conocidas, en donde el ruido 
-fue ordenes de magnitud mayor a la magnitud de la señal 
-de interés. Se analizaron los
-resultados obtenidos para distintas relaciones 
-señal-ruido, resultando los valores $RL$ = (430±30)Ω con 
-incerteza relativa de 7\% y
-$C$ = (0.72±0.0.04)µF con incerteza relativa de 6\% 
-,valores dentro de la cota del error tabulado para 
-SNR menores a -7.5dB.
+mediciones de impedancias conocidas con ruido blanco aditivo 
+de mayor magnitud a la señal 
+de interés. Se caracteriza la precisión y exactitud de la medición respecto a la relación señal ruido de entrada. 
+El lock in implementado midió el valor esperado de impedancia para 
+relación señal ruido en la entranda hasta los -7.5 dB,
+obteniendo mediciones con incerteza relativa de 4\% ante impedancia real y 6\% ante impedancia compleja.
 
 
 \begin{multicols}{2}
@@ -90,13 +84,13 @@ El lock in recupera la señal de interés multiplicando a esta por la referencia
 	\label{fig:lockin}
 \end{figure}
 
-La figura \ref{fig:lockin} presenta un circuito lock in típico. El bloque transformada de Hilbert para una referencia senoidal corresponde a un desfasaje de 90°. La señal de salida se obtiene en forma de parte real e imaginaria, pero típicamente se expresa en forma amplitud y fase
+La figura \ref{fig:lockin} presenta un circuito lock in típico. El bloque transformada de Hilbert para una referencia senoidal corresponde a un desfasaje de 90°.\\
 
+La señal de salida $z(t)$ se obtiene en forma de parte real e imaginaria
 \begin{equation*}
 	z(t) = x(t) + j y(t) = R(t) e ^{j\Phi(t)}
 \end{equation*}\\[-1em]
-
-Donde la amplitud y fase se obtienen de las ecuaciones
+Pero típicamente se expresa en forma amplitud y fase donde la amplitud y fase se obtienen de las ecuaciones
 
 \begin{equation}\label{eq:ampfase}
 	\begin{aligned}
@@ -182,10 +176,10 @@ para generar la señal de referencia y el ruido.
 Para sumar el ruido a la entrada es necesario flotar la 
 tierra del generador de señal, de lo contrario usará la tierra de la red eléctrica.\\
 
-Para la adquisición de datos del conversor analógico dígital USB-1408FS de
-Measurement Computing se importa la librería \texttt{mcculw}\cite{mcculw}. El lock in digital se implementa en Python.\\
+Para la adquisición de datos se usa un conversor analógico dígital USB-1408FS de
+Measurement Computing, a escala de $\pm 20$ V y rango dinámico de 14 bits. El lock in digital se implementa en Python adquiriendo los datos con la librería \texttt{mcculw}.\cite{mcculw}\\
 
-Armado el circuito se mide la máxima tasa de muestreo $f_s$, la cual está condicionada por la comunicación serie entre Python y los canales del ADC. 
+Armado el circuito se mide la máxima tasa de muestreo $f_s$, la cual está condicionada por la tasa de bits en comunicación serie entre Python y del ADC.
 Se mide temporizando y promediando el período de muestreo a máxima frecuencia.\\
 
 La tasa de muestreo se usa para diseñar los FIR digitales usando \texttt{scipy.signal.firwin}, para calcular $\tau$ a partir de la ecuación \ref{eq:tau}, y para conocer la máxima frecuencia de señal que se puede medir según el teorema del muestreo Nyquist.\cite{haykin_4}\\
@@ -234,7 +228,7 @@ El rendimiento del lock in incrementó con el orden del filtro. Los resultados a
 	\label{fig:RvsSNR}
 \end{figure}
 
-Se informa el valor de resistencia obtenido a máxima SNR, con error relativo del 7\%.
+Se informa el valor de resistencia obtenido a máxima SNR, con error relativo del 4\%.
 \begin{equation*}
 	R_L = \left(460 \pm 20\right) \, \Omega
 \end{equation*}
@@ -285,31 +279,33 @@ Se informa el valor de capacitancia obtenido a máxima SNR, con error relativo d
 \end{equation*}
 
 \section{Discusión}
-A la hora de implementar el lock in diseñado se tuvo 
-la limitancia de un valor bajo en la frecuencia de 
-muestreo máxima que permitía el adc utilizado, por lo 
-que se sugiere renovar éste 
-dispositivo para poder tener un mayor 
-rango de funcionamiento.\\
 
-Se recomienda no realizar mediciones 
-en la que la frecuencia de referencia sea 
-similar a la frecuencia de la red dado que 
-ésto introduce un mayor nivel de ruido.
+El factor limitante principal a la implementación del lock in diseñado fue la frecuencia de muestreo máxima permitida por el ADC.
+Esta frecuencia limita muchos aspectos del diseño, pero la mayor limitación es sobre la máxima resolución en frecuencia del filtro digital.\\
 
+Los resultados en la figura \ref{fig:RORDEN} parecen indicar que un filtro de mayor orden mejoraría el rendimiento del lock in pero no son concluyentes. Es posible que a órdenes mucho mayores el valor medido alcance el valor esperado de resistencia, o que converja a un valor diferente.\\
+
+Sin embargo no es práctico aumentar libremente el orden del filtro, que esto incrementa el retardo de grupo y la complejidad algorítmica del filtro. Lo ideal sería incrementar la frecuencia de muestreo.\\
+
+Una posible forma de incrementar la frecuencia de muestreo sin cambiar el ADC es evaluar si este permite reducir el rango dinámico. Si se reduce el rango dinámico se perderá resolución vertical en las muestras, pero se transmitirán más muestras por segundo a la misma tasa de bits.\\
+
+Una consideración importante es respecto al ruido de fondo presente durante el experimento. La figura \ref{fig:in_out} y figura \ref{fig:snr_filtros} (Apéndice 1) muestran que el ruido de fondo no es blanco, sino que es muy afectado por el ruido de línea a 50 Hz y su primer armónico a 100 Hz. 
+El efecto del ruido de línea imposibilita medir con frecuencias de referencia cercanas a los 50 Hz o 100 Hz.\\
+
+Además, el ruido de línea sesga la caracterización de la SNR a entrada. 
+Una caracterización de la SNR típica sería respecto a un fondo de ruido blanco, ya que este es independiente del entorno de medición. 
+Se propone en un análisis posterior filtrar el ruido de línea para caracterizar la SNR de entrada del lock in.
 
 \section{Conclusiones}
 
-Si bien los amplificadores lock in comerciales resuelven 
-mediciones con SNR de 1:1000, es decir -60dB,
- se encuentra satisfactorio 
-el rendimiento del lock in digital desarrollado, con 
-una implementación relativamente sencilla dado el importante 
-limitante que se tenía en la máxima frecuencia de muestreo.\\
+Se concluye por evaluación gráfica que la mínima SNR de entrada para la correcta medición con el lock in implementado es de
+aproximadamente -7.5 dB sobre un fondo de ruido blanco más ruido de línea de 50 Hz.\\
 
-Se concluye que la mínima SNR de entrada para el 
-correcto funcionamiento del lock in implementado es de 
-aproximadamente unos -7.5dB'.
+Si bien los amplificadores lock in comerciales resuelven 
+mediciones con SNR de 1:1000, es decir -60 dB, lo hacen con frecuencias de muestreo en el orden de los kHz.\\
+
+Se encuentra satisfactorio el rendimiento del lock in digital desarrollado ante 
+el factor limitante de una frecuencia de muestreo de 500 Hz. Se propone un método para mejorar el rendimiento usando la misma implementación e incrementando la frecuencia de muesteo.\\
 
 \bibliography{LockIn}
 \bibliographystyle{unsrt}
